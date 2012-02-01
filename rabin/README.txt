@@ -8,6 +8,8 @@ Our implementation tailors Karp-Rabin/Rabin's fingerprinting method for sliding 
 
 3. Using predefined irreducible polynomials/primes. Random choice of irreducible polynomials/primes withstands malicious construction of strings. However, such a requirement is rarely needed in the practice of Rabin fingerprinting, e.g., string matching or file chunking. So we omit, for the moment, the function that generates randomized irreducible polynomials/primes. 
 
+More details on our algorithms are included in lib/README, and evaluation is introduced in sample/README.
+
 Reference
 [1] Karp, R. M., and Rabin, M. O. 1987. Efficient randomized pattern-matching algorithms. IBM J. Res. Devel. 31, 2, 249-260.
 [2] Rabin, M. O. 1981. Fingerprinting by random functions. Report TR-15-81, Center for Research in Computing Technology, Harvard University, Cambridge, MA.
