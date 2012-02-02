@@ -1,6 +1,6 @@
 This sub-project of Cinquain consists of two components that can be utilized in wider application:
 
-1. Implementation of the Karp-Rabin fingerprint algorithm tailored for a sliding window
+1. Implementation of the Karp-Rabin/Rabin fingerprint algorithm tailored for a sliding window
 
 Detailed description and source code can be found under /fingerprint directory. Theoretical aspects of the algorithm are demonstrated in [1, 2].
 

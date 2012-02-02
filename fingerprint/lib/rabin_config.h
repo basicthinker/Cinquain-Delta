@@ -29,4 +29,9 @@ typedef int Int;
 
 typedef unsigned char Byte;
 
+const Int kPrime = 7993;
+const Int kSymbolBitWidth = sizeof(Byte) << 3;
+
+// #define DEBUG_FINGERPRINT
+
 #endif /* CINQUAIN_RABIN_CONFIG_H_ */

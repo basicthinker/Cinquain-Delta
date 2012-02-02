@@ -1,5 +1,4 @@
 /*
- *
  * Copyright (C) 2012 Jinglei Ren <jinglei.ren@stanzax.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,7 +31,31 @@ class Window {
   public:
     virtual Int Extend(Byte next_symbol) = 0;
     virtual Int Slide(Byte next_symbol) = 0;
+    virtual void Reset() = 0;
     virtual ~Window() {};
+};
+
+class NumericalWindow : public Window {
+  public:
+    explicit NumericalWindow(int width, Byte *string = 0);
+
+    inline Int Extend(Byte next_symbol);
+    inline Int Slide(Byte next_symbol);
+
+    inline void Reset();
+    inline void Reset(Byte *string);
+
+    ~NumericalWindow();
+
+  private:
+    inline void InitWeights();
+    inline void InitFingerprint(Byte *string);
+
+    const int width_;
+    Byte *window_symbols_;
+    int window_head_;
+    Int *weights_;
+    Int fingerprint_;
 };
 
 #endif /* CINQUAIN_RABIN_FINGERPRINT_H_ */
