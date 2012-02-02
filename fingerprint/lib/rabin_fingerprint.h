@@ -55,6 +55,7 @@ class NumericalWindow : public Window {
     Byte *window_symbols_;
     int window_head_;
     Int *weights_;
+    Int over_weight_;
     Int fingerprint_;
 };
 

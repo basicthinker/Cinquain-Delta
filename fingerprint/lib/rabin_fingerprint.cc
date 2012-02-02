@@ -31,9 +31,9 @@ using std::endl;
 #endif
 
 inline NumericalWindow::NumericalWindow(int width, Byte *string)
-    : width_(width), window_head_(0), fingerprint_(0) {
-  window_symbols_ = new Byte[width];
-  weights_ = new Int[width_ + 1];
+    : width_(width), window_head_(width - 1), fingerprint_(0) {
+  window_symbols_ = new Byte[width_];
+  weights_ = new Int[width_];
   InitWeights();
   if (string) {
     InitFingerprint(string);
@@ -46,24 +46,30 @@ inline NumericalWindow::~NumericalWindow() {
 
 inline void NumericalWindow::InitWeights() {
   weights_[0] = 1;
-  for (int i = 0; i < width_; ++i) {
-    weights_[i + 1] = (weights_[i] << kSymbolBitWidth) % kPrime;
+  for (int i = 1; i < width_; ++i) {
+    weights_[i] = (weights_[i - 1] << kSymbolBitWidth) % kPrime;
   }
+  over_weight_ = (weights_[width_ - 1] << kSymbolBitWidth) % kPrime;
 
 #ifdef DEBUG_FINGERPRINT
   cerr << "Initialized weights:" << endl;
-  for (int i = 0; i <= width_; ++i) {
+  for (int i = 0; i < width_; ++i) {
     cerr << "\t[" << i << "] = " << weights_[i];
   }
+  cerr << "\t[" << width_ << "] = " << over_weight_;
   cerr << endl;
 #endif
 }
 
 inline void NumericalWindow::InitFingerprint(Byte *string) {
   fingerprint_ = 0;
-  for (int i = 0; i < width_; ++i) {
-    fingerprint_ += (string[i] * weights_[i]) % kPrime;
+  Byte next_symbol;
+  for (window_head_ = 0; window_head_ < width_; ++window_head_) {
+    next_symbol = window_symbols_[window_head_] = string[window_head_];
+    fingerprint_ += (next_symbol * weights_[width_ - window_head_ - 1])
+        % kPrime;
   }
+  window_head_ = width_ - 1;
   fingerprint_ %= kPrime;
 
 #ifdef DEBUG_FINGERPRINT
@@ -72,15 +78,32 @@ inline void NumericalWindow::InitFingerprint(Byte *string) {
 }
 
 inline Int NumericalWindow::Extend(Byte next_symbol) {
-  return 0;
+  fingerprint_ = ((fingerprint_ << kSymbolBitWidth) + next_symbol) % kPrime;
+
+#ifdef DEBUG_FINGERPRINT
+  cerr << "(+) one-step extended fingerprint = " << fingerprint_ << endl;
+#endif
+
+  return fingerprint_;
 }
 
 inline Int NumericalWindow::Slide(Byte next_symbol) {
-  return 0;
+  ++window_head_;
+  window_head_ %= width_;
+  fingerprint_ = ((fingerprint_ << kSymbolBitWidth) + next_symbol
+      - window_symbols_[window_head_] * over_weight_) % kPrime;
+  window_symbols_[window_head_] = next_symbol;
+
+#ifdef DEBUG_FINGERPRINT
+  cerr << "[+] one-step slid fingerprint = " << fingerprint_ << endl;
+#endif
+
+  return fingerprint_;
 }
 
 inline void NumericalWindow::Reset() {
-  window_head_ = 0;
+  window_head_ = width_ - 1;
+  fingerprint_ = 0;
 }
 
 inline void NumericalWindow::Reset(Byte* string) {
