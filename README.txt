@@ -1,12 +1,12 @@
-This sub-project of Cinquain consists of two components that can be utilized in wider application:
+This sub-project of Cinquain consists of two components that can be separately utilized in wider application:
 
 1. Implementation of the Karp-Rabin/Rabin fingerprint algorithm tailored for a sliding window
 
-Detailed description and source code can be found under /fingerprint directory. Theoretical aspects of the algorithm are demonstrated in [1, 2].
+Detailed description and source code can be found under /fingerprint directory. Theoretical aspects of the algorithm were discussed in [1, 2].
 
 2. Implementation of a linear-time and constant-space delta-encoding algorithm for large files
 
-Detailed description and source code can be found under /delta directory. Theoretical aspects of the algorithm are demonstrated in [3].
+Detailed description and source code can be found under /delta directory. Theoretical aspects of the algorithm were discussed in [3].
 
 All programs are written in the C++ language and aim at high efficiency.
 This sub-project is released under Apache License Version 2.

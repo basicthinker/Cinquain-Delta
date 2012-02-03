@@ -38,9 +38,9 @@ void FillString(int length, Byte *string) {
 }
 
 void PrintString(int length, Byte *string) {
-  cout << "{ ";
+  cout << length << " { ";
   for (int i = 0; i < length; ++i) {
-    cout << hex << (Int)string[i] << " ";
+    cout << (Int)string[i] << " ";
   }
   cout << "}";
 }
@@ -57,8 +57,11 @@ int main() {
     window->Slide(string[i]);
   }
 
+  cout << hex;
+  cout << kSymbolBitWidth << " bits per symbol" << endl;
+  cout << kPrime << " as the prime" << endl;
   PrintString(width, string + length - width);
-  cout << "\t" << dec << window->GetFingerprint() << endl;
+  cout << "\t" << window->GetFingerprint() << endl;
 
   delete window;
 }
