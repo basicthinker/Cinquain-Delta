@@ -30,7 +30,7 @@ using std::cerr;
 using std::endl;
 #endif
 
-inline NumericalWindow::NumericalWindow(int width, Byte *string)
+NumericalWindow::NumericalWindow(int width, Byte *string)
     : width_(width), window_head_(width - 1), fingerprint_(0) {
   window_symbols_ = new Byte[width_];
   weights_ = new Int[width_];
@@ -54,9 +54,9 @@ inline void NumericalWindow::InitWeights() {
 #ifdef DEBUG_FINGERPRINT
   cerr << "Initialized weights:" << endl;
   for (int i = 0; i < width_; ++i) {
-    cerr << "\t[" << i << "] = " << weights_[i];
+    cerr << " [" << i << "] = " << weights_[i];
   }
-  cerr << "\t[" << width_ << "] = " << over_weight_;
+  cerr << " [" << width_ << "] = " << over_weight_;
   cerr << endl;
 #endif
 }
@@ -98,6 +98,10 @@ inline Int NumericalWindow::Slide(Byte next_symbol) {
   cerr << "[+] one-step slid fingerprint = " << fingerprint_ << endl;
 #endif
 
+  return fingerprint_;
+}
+
+inline Int NumericalWindow::GetFingerprint() {
   return fingerprint_;
 }
 

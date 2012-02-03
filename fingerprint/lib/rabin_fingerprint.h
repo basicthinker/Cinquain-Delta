@@ -27,20 +27,22 @@
 
 #include "rabin_config.h"
 
-class Window {
+class RabinWindow {
   public:
     virtual Int Extend(Byte next_symbol) = 0;
     virtual Int Slide(Byte next_symbol) = 0;
+    virtual Int GetFingerprint() = 0;
     virtual void Reset() = 0;
-    virtual ~Window() {};
+    virtual ~RabinWindow() {};
 };
 
-class NumericalWindow : public Window {
+class NumericalWindow : public RabinWindow {
   public:
     explicit NumericalWindow(int width, Byte *string = 0);
 
     inline Int Extend(Byte next_symbol);
     inline Int Slide(Byte next_symbol);
+    inline Int GetFingerprint();
 
     inline void Reset();
     inline void Reset(Byte *string);
