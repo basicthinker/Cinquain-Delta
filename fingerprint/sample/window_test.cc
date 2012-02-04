@@ -31,6 +31,142 @@
 
 using namespace std;
 
+// Global setting
+const int kWidth = 16;
+
+static void FillString(int length, Byte *string);
+static void PrintString(ostream &out, int length, Byte *string);
+
+// Part One: Test for Sliding a Window
+static void TestSlide(ostream &out) {
+  // Config for parameters
+  const int num_cases = 10000; // The number of random strings to generate for test.
+  const int length = kWidth * 2; // The length of each string, only the last window
+                          // has its fingerprint value checked after sliding.
+  
+  Byte *input_string = new Byte[length];
+  FillString(length, input_string);
+  RabinWindow *window = new NumericalWindow(kWidth, input_string); // Test constructor.
+  
+  for (int i = kWidth; i < length; ++i) {
+    window->Slide(input_string[i]);
+  }
+  PrintString(out, kWidth, input_string + length - kWidth);
+  out << "\t" << window->GetFingerprint() << endl;
+  
+  for (int i = 0; i < num_cases - 1; ++i) {
+    FillString(length, input_string);
+    window->Reset(input_string); // Test Reset(Byte *) function
+    for (int j = kWidth; j < length; ++j) {
+      window->Slide(input_string[j]);
+    }
+    PrintString(out, kWidth, input_string + length - kWidth);
+    out << "\t" << window->GetFingerprint() << endl;
+  }
+  
+  delete input_string;
+  delete window;
+
+}
+
+// Part Two: Test for Extending a Window
+static void TestExtend(ostream &out) {
+  // Config for parameters
+  const int num_cases = 10000; // The number of random strings to generate for test.
+  const int length = kWidth * 4; // The length of each string.
+  
+  Byte *input_string = new Byte[length];
+  FillString(length, input_string);
+  RabinWindow *window = new NumericalWindow(kWidth, input_string); // Test constructor.
+  
+  for (int i = kWidth; i < length; ++i) {
+    window->Extend(input_string[i]);
+  }
+  PrintString(out, length, input_string);
+  out << "\t" << window->GetFingerprint() << endl;
+  
+  for (int i = 0; i < num_cases - 1; ++i) {
+    FillString(length, input_string);
+    window->Reset(input_string); // Test Reset(Byte *) function
+    for (int j = kWidth; j < length; ++j) {
+      window->Extend(input_string[j]);
+    }
+    PrintString(out, length, input_string);
+    out << "\t" << window->GetFingerprint() << endl;
+  }
+  
+  delete input_string;
+  delete window;
+}
+
+// Part Three: Test for Collision
+static void TestCollision(ostream &out) {
+  // Config for parameters
+  const int expected_collision_count = 100;
+  const int num_cases = kPrime * expected_collision_count; 
+    // The number of window values to generate for test.
+  
+  int *hash_counts = new int[kPrime];
+  memset(hash_counts, 0, kPrime * sizeof(int));
+  
+  int length = num_cases + kWidth - 1; // NOT configurable
+  Byte *input_string = new Byte[num_cases + kWidth - 1];
+  FillString(length, input_string);
+  
+  RabinWindow *window = new NumericalWindow(kWidth, input_string);
+  ++hash_counts[window->GetFingerprint()];
+  
+  for (int i = kWidth; i < length; ++i) {
+    window->Slide(input_string[i]);
+    ++hash_counts[window->GetFingerprint()];
+  }
+  
+  sort(hash_counts, hash_counts + kPrime);
+  
+  out << "Expected collision count of a position: "
+    << expected_collision_count << endl;
+  out << "All unexpected collision counts:" << endl;
+  
+  int case_count = 0;
+  int position_count = 0;
+  for (int i = 0; i < kPrime; ++i) {
+    case_count += hash_counts[i];
+    if (hash_counts[i] != expected_collision_count) {
+      ++position_count;
+      out << "\t" << hash_counts[i];
+    }
+  }
+  out << endl;
+  
+  out << "For " << case_count << " vlues," << endl;
+  out << "there are " << position_count
+    << " positions among " << kPrime << endl;
+  out << "meeting unexpected numbers of collisions" << endl;
+  out << "in range [" << hash_counts[0] << ", "
+    << hash_counts[kPrime - 1] << "]." << endl;
+
+  delete window;
+  delete hash_counts;
+  delete input_string;
+}
+
+int main() {
+  
+  ofstream output_file;
+  output_file.open("fingerprints.log");
+  
+  output_file << hex;
+  output_file << kSymbolBitWidth << " bits per symbol" << endl;
+  output_file << kPrime << " as the prime" << endl;
+  
+  TestExtend(output_file);
+  TestSlide(output_file);
+  
+  TestCollision(cout);
+
+  output_file.close();
+}
+
 static void FillString(int length, Byte *string) {
   long max_value = 1 << kSymbolBitWidth;
   for (int i = 0; i < length; ++i) {
@@ -45,71 +181,3 @@ static void PrintString(ostream &out, int length, Byte *string) {
   }
   out << "}";
 }
-
-int main() {
-  const int width = 16;
-  
-  ofstream file;
-  file.open("fingerprints.log");
-  
-  file << hex;
-  file << kSymbolBitWidth << " bits per symbol" << endl;
-  file << kPrime << " as the prime" << endl;
-  
-  /* Part One: Test for Sliding a Window */
-  
-  int length = width * 2;
-  Byte *string = new Byte[length];
-  FillString(length, string);
-  RabinWindow *window = new NumericalWindow(width, string); // Test constructor.
-  
-  for (int i = width; i < length; ++i) {
-    window->Slide(string[i]);
-  }
-  PrintString(file, width, string + length - width);
-  file << "\t" << window->GetFingerprint() << endl;
-  
-  for (int i = 0; i < 9999; ++i) {
-    FillString(length, string);
-    window->Reset(string); // Test Reset(Byte *) function
-    for (int j = width; j < length; ++j) {
-      window->Slide(string[j]);
-    }
-    PrintString(file, width, string + length - width);
-    file << "\t" << window->GetFingerprint() << endl;
-  }
-
-  delete string;
-  delete window;
-  
-  /* Part Two: Test for Extending a Windows */
-  
-  length = width * 4;
-  string = new Byte[length];
-  FillString(length, string);
-  window = new NumericalWindow(width, string); // Test constructor.
-  
-  for (int i = width; i < length; ++i) {
-    window->Extend(string[i]);
-  }
-  PrintString(file, length, string);
-  file << "\t" << window->GetFingerprint() << endl;
-  
-  for (int i = 0; i < 9999; ++i) {
-    FillString(length, string);
-    window->Reset(string); // Test Reset(Byte *) function
-    for (int j = width; j < length; ++j) {
-      window->Extend(string[j]);
-    }
-    PrintString(file, length, string);
-    file << "\t" << window->GetFingerprint() << endl;
-  }
-  
-  delete string;
-  delete window;
-
-  file.close();
-
-
-}
-
