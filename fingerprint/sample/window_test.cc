@@ -1,5 +1,4 @@
 /*
- *
  * Copyright (C) 2012 Jinglei Ren <jinglei.ren@stanzax.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
+ * 
  */
 
 /*
@@ -66,7 +65,6 @@ static void TestSlide(ostream &out) {
   
   delete input_string;
   delete window;
-
 }
 
 // Part Two: Test for Extending a Window
@@ -150,8 +148,7 @@ static void TestCollision(ostream &out) {
   delete input_string;
 }
 
-int main() {
-  
+int main(int argc, const char * argv[]) {  
   ofstream output_file;
   output_file.open("fingerprints.log");
   
@@ -165,6 +162,8 @@ int main() {
   TestCollision(cout);
 
   output_file.close();
+  
+  return 0;
 }
 
 static void FillString(int length, Byte *string) {
