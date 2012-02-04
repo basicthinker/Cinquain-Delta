@@ -33,6 +33,7 @@ class RabinWindow {
     virtual Int Slide(Byte next_symbol) = 0;
     virtual Int GetFingerprint() = 0;
     virtual void Reset() = 0;
+    virtual void Reset(Byte* string) = 0;
     virtual ~RabinWindow() {};
 };
 

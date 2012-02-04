@@ -78,7 +78,7 @@ inline void NumericalWindow::InitFingerprint(Byte *string) {
 }
 
 inline Int NumericalWindow::Extend(Byte next_symbol) {
-  fingerprint_ = ((fingerprint_ << kSymbolBitWidth) + next_symbol) % kPrime;
+  fingerprint_ = ((fingerprint_ << kSymbolBitWidth) + next_symbol) % kPrime + kPrime;
 
 #ifdef DEBUG_FINGERPRINT
   cerr << "(+) one-step extended fingerprint = " << fingerprint_ << endl;
@@ -90,6 +90,8 @@ inline Int NumericalWindow::Extend(Byte next_symbol) {
 inline Int NumericalWindow::Slide(Byte next_symbol) {
   ++window_head_;
   window_head_ %= width_;
+  fingerprint_ += kPrime; // Prevent negative integers
+                          // in the following operations
   fingerprint_ = ((fingerprint_ << kSymbolBitWidth) + next_symbol
       - window_symbols_[window_head_] * over_weight_) % kPrime;
   window_symbols_[window_head_] = next_symbol;

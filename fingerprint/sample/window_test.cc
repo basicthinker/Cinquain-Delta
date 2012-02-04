@@ -17,7 +17,7 @@
  */
 
 /*
- * test.cc
+ * window_test.cc
  *
  *  Created on: Feb 1, 2012
  *      Author: Jinglei Ren <jinglei.ren@gmail.com>
@@ -27,41 +27,59 @@
 #include "rabin_fingerprint.h"
 #include <cstdlib>
 #include <iostream>
+#include <fstream>
 
 using namespace std;
 
-void FillString(int length, Byte *string) {
+static void FillString(int length, Byte *string) {
   long max_value = 1 << kSymbolBitWidth;
   for (int i = 0; i < length; ++i) {
     string[i] = rand() % max_value;
   }
 }
 
-void PrintString(int length, Byte *string) {
-  cout << length << " { ";
+static void PrintString(ostream &out, int length, Byte *string) {
+  out << length << " { ";
   for (int i = 0; i < length; ++i) {
-    cout << (Int)string[i] << " ";
+    out << (Int)string[i] << " ";
   }
-  cout << "}";
+  out << "}";
 }
 
 int main() {
   const int width = 16;
   const int length = width * 2;
-
+  
+  ofstream file;
+  file.open("fingerprints.log");
+  
+  file << hex;
+  file << kSymbolBitWidth << " bits per symbol" << endl;
+  file << kPrime << " as the prime" << endl;
+  
+  // Part One: Test for the Sliding Window
+  
   Byte string[length];
   FillString(length, string);
-
-  RabinWindow *window = new NumericalWindow(width, string);
+  RabinWindow *window = new NumericalWindow(width, string); // Test constructor.
+  
   for (int i = width; i < length; ++i) {
     window->Slide(string[i]);
   }
+  PrintString(file, width, string + length - width);
+  file << "\t" << window->GetFingerprint() << endl;
+  
+  for (int i = 0; i < 9999; ++i) {
+    FillString(length, string);
+    window->Reset(string); // Test Reset(Byte *) function
+    for (int j = width; j < length; ++j) {
+      window->Slide(string[j]);
+    }
+    PrintString(file, width, string + length - width);
+    file << "\t" << window->GetFingerprint() << endl;
+  }
 
-  cout << hex;
-  cout << kSymbolBitWidth << " bits per symbol" << endl;
-  cout << kPrime << " as the prime" << endl;
-  PrintString(width, string + length - width);
-  cout << "\t" << window->GetFingerprint() << endl;
+  file.close();
 
   delete window;
 }
