@@ -48,7 +48,6 @@ static void PrintString(ostream &out, int length, Byte *string) {
 
 int main() {
   const int width = 16;
-  const int length = width * 2;
   
   ofstream file;
   file.open("fingerprints.log");
@@ -57,9 +56,10 @@ int main() {
   file << kSymbolBitWidth << " bits per symbol" << endl;
   file << kPrime << " as the prime" << endl;
   
-  // Part One: Test for the Sliding Window
+  /* Part One: Test for Sliding a Window */
   
-  Byte string[length];
+  int length = width * 2;
+  Byte *string = new Byte[length];
   FillString(length, string);
   RabinWindow *window = new NumericalWindow(width, string); // Test constructor.
   
@@ -79,8 +79,37 @@ int main() {
     file << "\t" << window->GetFingerprint() << endl;
   }
 
+  delete string;
+  delete window;
+  
+  /* Part Two: Test for Extending a Windows */
+  
+  length = width * 4;
+  string = new Byte[length];
+  FillString(length, string);
+  window = new NumericalWindow(width, string); // Test constructor.
+  
+  for (int i = width; i < length; ++i) {
+    window->Extend(string[i]);
+  }
+  PrintString(file, length, string);
+  file << "\t" << window->GetFingerprint() << endl;
+  
+  for (int i = 0; i < 9999; ++i) {
+    FillString(length, string);
+    window->Reset(string); // Test Reset(Byte *) function
+    for (int j = width; j < length; ++j) {
+      window->Extend(string[j]);
+    }
+    PrintString(file, length, string);
+    file << "\t" << window->GetFingerprint() << endl;
+  }
+  
+  delete string;
+  delete window;
+
   file.close();
 
-  delete window;
+
 }
 

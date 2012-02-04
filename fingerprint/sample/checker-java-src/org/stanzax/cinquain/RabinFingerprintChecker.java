@@ -13,14 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package stanzax;
+package org.stanzax.cinquain;
 
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Scanner;
 
 /**
+ * RabinFingerprintChecker checks Rabin fingerprints in an input file
+ * by comparing them with those computed using BigInteger in a straight forward way.
+ * <p>
+ * The input file should contain a two-line header followed by data lines
+ * (all using hexadecimal values):
+ * <p>
+ * [NumberOfBitsPerSymbol] the first line should start with such a hexadecimal integer<br>
+ * [Prime] the second line should start with such a hexadecimal integer<br>
+ * [NumberOfSymbols] { [Symbol...] } [FingerprintToCheck]<br>
+ * ...<br>
+ * <p>
+ * The output lines have three columns:
+ * original fingerprint, correct fingerprint, whether they are equal.
+ * 
  * @author Jinglei Ren <jinglei.ren@gmail.com>
  *
  */
@@ -31,7 +46,7 @@ public class RabinFingerprintChecker {
 	 */
 	public static void main(String[] args) {
 		if (args.length != 1) {
-			System.out.println("Usage: ./RabinFingerprintChecker.jar [FileName]");
+			System.out.println("Usage: java -jar RabinFingerprintChecker.jar [FileName]");
 			return;
 		}
 		
@@ -61,25 +76,41 @@ public class RabinFingerprintChecker {
 				}
 			}
 			
+			int totalNum = 0;
+			int wrongNum = 0;
 			BigInteger weight = BigInteger.valueOf(1L << numBits);
+			
 			while (scanner.hasNext()) {
 				int length = scanner.nextInt(16);
 				
-				scanner.next("{");
+				scanner.next(); // skip "{"
 				BigInteger stringValue = new BigInteger("0");
 				for (int i = 0; i < length; ++i) {
 					stringValue = stringValue.multiply(weight).add(scanner.nextBigInteger(16));
 				}
-				scanner.next("}");
+				scanner.next(); // skip "}"
 				
-				String stdValue = stringValue.mod(prime).toString();
+				String correctValue = stringValue.mod(prime).toString(16);
 				String toCheck = scanner.next();
 				
-				System.out.printf("%s %s %b\n", toCheck, stdValue, toCheck.equals(stdValue));
+				++totalNum;
+				if (!toCheck.equals(correctValue)) {
+					++wrongNum;
+				}
+				System.out.printf("%s %s %b\n", toCheck, correctValue, toCheck.equals(correctValue));
 			}
+			
+			System.out.println("\nResults:");
+			System.out.printf("Checked %d fingerprints.\n", totalNum);
+			System.out.printf("There are %d wrong ones.\n", wrongNum);
+			
+			scanner.close();
+			reader.close();
+			
 		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
-
 }
