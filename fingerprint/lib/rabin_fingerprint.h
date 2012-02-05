@@ -26,6 +26,13 @@
 #define CINQUAIN_RABIN_FINGERPRINT_H_
 
 #include "rabin_config.h"
+#include <memory.h>
+
+#ifdef DEBUG_FINGERPRINT
+#include <iostream>
+using std::cerr;
+using std::endl;
+#endif
 
 class RabinWindow {
   public:
@@ -40,19 +47,19 @@ class NumericalWindow : public RabinWindow {
   public:
     explicit NumericalWindow(int width, Byte *string = 0);
 
-    inline Int Extend(Byte next_symbol);
-    inline Int Slide(Byte next_symbol);
-    inline Int GetFingerprint();
+    Int Extend(Byte next_symbol);
+    Int Slide(Byte next_symbol);
+    Int GetFingerprint();
 
-    inline void Reset(Byte* string = 0);
+    void Reset(Byte* string = 0);
 
     ~NumericalWindow();
   
     static Int SymbolShift(Int value);
 
   private:
-    inline void InitWeights();
-    inline void InitFingerprint(Byte *string);
+    void InitWeights();
+    void InitFingerprint(Byte *string);
 
     const int width_;
     Byte *window_symbols_;
@@ -61,6 +68,67 @@ class NumericalWindow : public RabinWindow {
     Int over_weight_;
     Int fingerprint_;
 };
+
+
+inline void NumericalWindow::InitFingerprint(Byte *string) {
+  fingerprint_ = 0;
+  Byte next_symbol;
+  for (window_head_ = 0; window_head_ < width_; ++window_head_) {
+    next_symbol = window_symbols_[window_head_] = string[window_head_];
+    fingerprint_ += (next_symbol * weights_[width_ - window_head_ - 1])
+    % kPrime;
+  }
+  window_head_ = width_ - 1;
+  fingerprint_ %= kPrime;
+  
+#ifdef DEBUG_FINGERPRINT
+  cerr << "Initialized fingerprint = " << fingerprint_ << endl;
+#endif
+}
+
+inline Int NumericalWindow::SymbolShift(Int value) {
+  return (value << kSymbolBitWidth) + value;
+}
+
+inline Int NumericalWindow::Extend(Byte next_symbol) {
+  fingerprint_ = (SymbolShift(fingerprint_) + next_symbol) % kPrime;
+  
+#ifdef DEBUG_FINGERPRINT
+  cerr << "(+) one-step extended fingerprint = " << fingerprint_ << endl;
+#endif
+  
+  return fingerprint_;
+}
+
+inline Int NumericalWindow::Slide(Byte next_symbol) {
+  ++window_head_;
+  window_head_ %= width_;
+  fingerprint_ += kPrime; // Prevent negative integers
+                          // in the following operations
+  fingerprint_ = (SymbolShift(fingerprint_) + next_symbol
+                  - window_symbols_[window_head_] * over_weight_) % kPrime;
+  window_symbols_[window_head_] = next_symbol;
+  
+#ifdef DEBUG_FINGERPRINT
+  cerr << "[+] one-step slid fingerprint = " << fingerprint_ << endl;
+#endif
+  
+  return fingerprint_;
+}
+
+inline Int NumericalWindow::GetFingerprint() {
+  return fingerprint_;
+}
+
+inline void NumericalWindow::Reset(Byte* string) {
+  window_head_ = width_ - 1;
+  fingerprint_ = 0;
+  if (string) {
+    InitFingerprint(string);
+  } else {
+    memset(window_symbols_, 0, width_ * sizeof(Byte));
+  }
+}
 
 #endif /* CINQUAIN_RABIN_FINGERPRINT_H_ */
 
