@@ -153,7 +153,8 @@ int main(int argc, const char * argv[]) {
   output_file.open("fingerprints.log");
   
   output_file << hex;
-  output_file << NumericalWindow::SymbolShift(1) << " as the radix of symbol" << endl;
+  output_file << NumericalWindow::SymbolShift(1) 
+    << " as the radix of symbol" << endl;
   output_file << kPrime << " as the prime" << endl;
   
   TestExtend(output_file);

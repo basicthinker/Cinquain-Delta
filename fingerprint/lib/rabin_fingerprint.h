@@ -32,8 +32,7 @@ class RabinWindow {
     virtual Int Extend(Byte next_symbol) = 0;
     virtual Int Slide(Byte next_symbol) = 0;
     virtual Int GetFingerprint() = 0;
-    virtual void Reset() = 0;
-    virtual void Reset(Byte* string) = 0;
+    virtual void Reset(Byte* string = 0) = 0;
     virtual ~RabinWindow() {};
 };
 
@@ -45,8 +44,7 @@ class NumericalWindow : public RabinWindow {
     inline Int Slide(Byte next_symbol);
     inline Int GetFingerprint();
 
-    inline void Reset();
-    inline void Reset(Byte *string);
+    inline void Reset(Byte* string = 0);
 
     ~NumericalWindow();
   

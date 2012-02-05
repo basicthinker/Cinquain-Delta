@@ -23,6 +23,7 @@
  */
 
 #include "rabin_fingerprint.h"
+#include <memory.h>
 
 #ifdef DEBUG_FINGERPRINT
 #include <iostream>
@@ -35,17 +36,31 @@ inline Int NumericalWindow::SymbolShift(Int value) {
 }
 
 NumericalWindow::NumericalWindow(int width, Byte *string)
-    : width_(width), window_head_(width - 1), fingerprint_(0) {
-  window_symbols_ = new Byte[width_];
+    : width_(width),
+      window_head_(width - 1),
+      fingerprint_(0) {
   weights_ = new Int[width_];
   InitWeights();
+  window_symbols_ = new Byte[width_];
   if (string) {
     InitFingerprint(string);
+  } else {
+    memset(window_symbols_, 0, width_ * sizeof(Byte));
   }
 }
 
 inline NumericalWindow::~NumericalWindow() {
   delete window_symbols_;
+}
+
+inline void NumericalWindow::Reset(Byte* string) {
+  window_head_ = width_ - 1;
+  fingerprint_ = 0;
+  if (string) {
+    InitFingerprint(string);
+  } else {
+    memset(window_symbols_, 0, width_ * sizeof(Byte));
+  }
 }
 
 inline void NumericalWindow::InitWeights() {
@@ -111,13 +126,4 @@ inline Int NumericalWindow::GetFingerprint() {
   return fingerprint_;
 }
 
-inline void NumericalWindow::Reset() {
-  window_head_ = width_ - 1;
-  fingerprint_ = 0;
-}
-
-inline void NumericalWindow::Reset(Byte* string) {
-  Reset();
-  InitFingerprint(string);
-}
 
