@@ -49,6 +49,8 @@ class NumericalWindow : public RabinWindow {
     inline void Reset(Byte *string);
 
     ~NumericalWindow();
+  
+    static Int SymbolShift(Int value);
 
   private:
     inline void InitWeights();

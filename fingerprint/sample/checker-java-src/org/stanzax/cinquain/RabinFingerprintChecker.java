@@ -28,7 +28,7 @@ import java.util.Scanner;
  * The input file should contain a two-line header followed by data lines
  * (all using hexadecimal values):
  * <p>
- * [NumberOfBitsPerSymbol] the first line should start with such a hexadecimal integer<br>
+ * [SymbolRadix] the first line should start with such a hexadecimal integer<br>
  * [Prime] the second line should start with such a hexadecimal integer<br>
  * [NumberOfSymbols] { [Symbol...] } [FingerprintToCheck]<br>
  * ...<br>
@@ -55,7 +55,7 @@ public class RabinFingerprintChecker {
 			Scanner scanner = new Scanner(reader);
 			
 			// Parse the first two lines to retrieve bit-length of symbol and prime
-			long numBits = 0;
+			long symbolRadix = 0;
 			BigInteger prime = new BigInteger("0");
 			for (int lineNum = 1; lineNum <= 2; ++lineNum) {
 				if (!scanner.hasNext()) {
@@ -64,7 +64,7 @@ public class RabinFingerprintChecker {
 				}
 				switch (lineNum) {
 				case 1:
-					numBits = scanner.nextLong(16);
+					symbolRadix = scanner.nextLong(16);
 					scanner.nextLine();
 					break;
 				case 2:
@@ -78,7 +78,7 @@ public class RabinFingerprintChecker {
 			
 			int totalNum = 0;
 			int wrongNum = 0;
-			BigInteger weight = BigInteger.valueOf(1L << numBits);
+			BigInteger weight = BigInteger.valueOf(symbolRadix);
 			
 			while (scanner.hasNext()) {
 				int length = scanner.nextInt(16);
