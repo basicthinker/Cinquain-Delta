@@ -26,28 +26,24 @@
 #define CINQUAIN_DELTA_AJTI_DIFF_H_
 
 #include "rabin_fingerprint.h"
-#include "versioned_hashtable.h"
+#include "int_hashtable.h"
 #include "diff_output.h"
-
-typedef long long Int64;
-const Int64 kHashVersionPlus = Int64(1) << 48;
 
 class CinquainEncoder {
   public:
     CinquainEncoder(int hashtable_length, int seed_length);
-    void Encode(Byte *reference, long length_r, Byte *version, long length_v,
+    void Encode(Byte *reference, const long length_r,
+                Byte *version, const long length_v,
                 DiffOutput *output);
     ~CinquainEncoder();
   
   private:
-    void Reset(Byte *reference, Byte *version);
-  
-    const int hashtable_length_;
-  
+    void Reset();
+
     // Following comments denote symbols in the original paper
     const int seed_length_; // p
-    VersionedHashtable *hashtable_r_; // H_R
-    VersionedHashtable *hashtable_v_; // H_V
+    IntHashtable *hashtable_r_; // H_R
+    IntHashtable *hashtable_v_; // H_V
     RabinWindow *window_r_; // F_R
     RabinWindow *window_v_; // F_V
     long current_r_; // r_c

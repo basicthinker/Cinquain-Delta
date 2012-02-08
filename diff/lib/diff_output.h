@@ -25,22 +25,32 @@
 #ifndef CINQUAIN_DELTA_DIFF_OUTPUT_H_
 #define CINQUAIN_DELTA_DIFF_OUTPUT_H_
 
+class DiffOutputInterface;
+
+typedef DiffOutputInterface DiffOutput;
+
 enum DiffInstruction {
   ADD,
   COPY
 };
 
-class DiffOutput {
+class DiffOutputInterface {
   public:
-    virtual void Apend(DiffInstruction instruction, long begin, long end) = 0;
+    virtual void Apend(DiffInstruction instruction,
+                       const long begin, const long end) = 0;
+    virtual void Correct(const long begin, const long end) = 0;
     virtual void Flush() = 0;
-    virtual ~DiffOutput() {}
+    virtual ~DiffOutputInterface() {}
 };
 
-class VCDIFFOutput : public DiffOutput {
+
+/* Implementing classes */
+
+class VCDIFFOutput : public DiffOutputInterface {
   public:
     VCDIFFOutput(char *file_name);
-    void Apend(DiffInstruction instruction, long begin, long end);
+    void Apend(DiffInstruction instruction, const long begin, const long end);
+    void Correct(const long begin, const long end);
     void Flush();
     ~VCDIFFOutput();
 };

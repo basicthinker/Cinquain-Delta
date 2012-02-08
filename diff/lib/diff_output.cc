@@ -36,6 +36,10 @@ void VCDIFFOutput::Apend(DiffInstruction instruction, long begin, long end) {
 
 }
 
+void VCDIFFOutput::Correct(const long begin, const long end) {
+  
+}
+
 void VCDIFFOutput::Flush() {
 
 }

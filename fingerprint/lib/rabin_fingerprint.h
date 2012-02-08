@@ -39,7 +39,7 @@ class RabinWindow {
     virtual Int Extend(Byte next_symbol) = 0;
     virtual Int Slide(Byte next_symbol) = 0;
     virtual Int GetFingerprint() = 0;
-    virtual void Reset(Byte* string = 0) = 0;
+    virtual Int Reset(Byte* string = 0) = 0;
     virtual ~RabinWindow() {};
 };
 
@@ -51,7 +51,7 @@ class NumericalWindow : public RabinWindow {
     Int Slide(Byte next_symbol);
     Int GetFingerprint();
 
-    void Reset(Byte* string = 0);
+    Int Reset(Byte* string = 0);
 
     ~NumericalWindow();
   
@@ -120,7 +120,7 @@ inline Int NumericalWindow::GetFingerprint() {
   return fingerprint_;
 }
 
-inline void NumericalWindow::Reset(Byte* string) {
+inline Int NumericalWindow::Reset(Byte* string) {
   window_head_ = width_ - 1;
   fingerprint_ = 0;
   if (string) {
@@ -128,6 +128,7 @@ inline void NumericalWindow::Reset(Byte* string) {
   } else {
     memset(window_symbols_, 0, width_ * sizeof(Byte));
   }
+  return fingerprint_;
 }
 
 #endif /* CINQUAIN_RABIN_FINGERPRINT_H_ */
