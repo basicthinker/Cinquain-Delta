@@ -18,6 +18,14 @@
 //
 //  versioned_hashtable.h
 //  Cinquain-Delta
+//  
+//  This class is intended for the one-pass encoding algorithm
+//  as in the original paper. However, the encapsulating library
+//  now chooses the correcting one-pass algorithm that does NOT 
+//  require a versioned hashtable. NOTE that this class has NOT
+//  undergone full testing.
+//
+//  THIS FILE CAN BE EXCLUDED FROM THE LIBRARY IF YOU WISH.
 //
 //  Created by Jinglei Ren <jinglei.ren@gmail.com> on 2/5/12.
 //
