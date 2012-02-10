@@ -91,70 +91,82 @@ void CinquainEncoder::Encode(Byte *string_r, const long length_r,
     hashtable_v_->SetValue(fingerprint_v, current_v_); // (4.a)
     hashtable_r_->SetValue(fingerprint_r, current_r_); // (4.a)
     
-    if (hashtable_v_->HasValue(fingerprint_r)) { // (4.b)
+    // Step (4.b)
+    bool has_match = false;
+    if (hashtable_v_->HasValue(fingerprint_r)) {
       match_r = current_r_;
       match_v = hashtable_v_->GetValue(fingerprint_r);
-    } else if (hashtable_r_->HasValue(fingerprint_v)) {
-      match_r = hashtable_r_->GetValue(fingerprint_v);
-      match_v = current_v_;
+      if (memcmp(string_r + match_r, string_v + match_v,
+             seed_length_ * sizeof(Byte)) == 0) {
+        has_match = true;
+      }
     }
     
-    Byte *position_r = string_r + match_r;
-    Byte *position_v = string_v + match_v;
-    if (memcmp(position_r, position_v,
-               seed_length_ * sizeof(Byte)) == 0) {
-      // Step (5)
-      // Extend forwards
-      long forward_length = seed_length_;
-      long limit = min(length_r - match_r, length_v - match_v);
-      while (forward_length < limit && 
-             *(position_r + forward_length) == *(position_v + forward_length)) {
-        ++forward_length;
-      }
-      // Extend backwards
-      long backward_length = 0;
-      limit = min(match_r, match_v);
-      while (backward_length < limit &&
-             *(position_r - backward_length - 1) == *(position_v - backward_length - 1)) {
-        ++backward_length;
-      }
-      match_r -= backward_length;
-      match_v -= backward_length;
-      match_length = backward_length + forward_length;
-      
-      if (suffix_v_ <= match_v) { // (6)
-        output->Apend(ADD, suffix_v_, match_v);
-        output->Apend(COPY, match_v, match_v + match_length);
-      } else {
-        output->Correct(match_v, match_v + match_length);
-      }
-      suffix_v_ = match_v + match_length;
-      
-      if ((match_v += match_length) <= ++current_v_) {
-        to_clear_window_v = false;
-      } else {
-        current_v_ = match_v;
-        to_clear_window_v = true;
-      }
-      
-      if ((match_r += match_length) <= ++current_r_) {
-        to_clear_window_r = false;
-      } else {
-        current_r_ = match_r;
-        to_clear_window_r = true;
-      }
-    } else { // (4.b)
+    if (!has_match && hashtable_r_->HasValue(fingerprint_v)) {
+      match_r = hashtable_r_->GetValue(fingerprint_v);
+      match_v = current_v_;
+      if (memcmp(string_r + match_r, string_v + match_v,
+                 seed_length_ * sizeof(Byte)) == 0) {
+        has_match = true;
+      } 
+    }
+    
+    if (!has_match) {
       ++current_v_;
       ++current_r_;
       to_clear_window_v = false;
       to_clear_window_r = false;
+      continue;
     }
     
-    // Step (8)
-    if (suffix_v_ < length_v) {
-      output->Apend(ADD, suffix_v_, length_v);
+    // Step (5)
+    Byte *position_r = string_r + match_r;
+    Byte *position_v = string_v + match_v;
+    // Extend forwards
+    long forward_length = seed_length_;
+    long limit = min(length_r - match_r, length_v - match_v);
+    while (forward_length < limit && 
+          *(position_r + forward_length) == *(position_v + forward_length)) {
+      ++forward_length;
     }
-    output->Flush();
+    // Extend backwards
+    long backward_length = 0;
+    limit = min(match_r, match_v);
+    while (backward_length < limit &&
+          *(--position_r) == *(--position_v)) {
+      ++backward_length;
+    }
+    match_r -= backward_length;
+    match_v -= backward_length;
+    match_length = backward_length + forward_length;
+    
+    if (suffix_v_ <= match_v) { // (6)
+      output->Append(ADD, suffix_v_, match_v);
+      output->Append(COPY, match_v, match_v + match_length);
+      suffix_v_ = match_v + match_length;
+    } else {
+      suffix_v_ = output->Correct(match_v, match_v + match_length);
+    }
+    
+    // Step (7)
+    if ((match_v += match_length) <= ++current_v_) {
+      to_clear_window_v = false;
+    } else {
+      current_v_ = match_v;
+      to_clear_window_v = true;
+    }
+    
+    if ((match_r += match_length) <= ++current_r_) {
+      to_clear_window_r = false;
+    } else {
+      current_r_ = match_r;
+      to_clear_window_r = true;
+    }
+  } // while to Step (3)
+  // Step (8)
+  if (suffix_v_ < length_v) {
+    output->Append(ADD, suffix_v_, length_v);
   }
+  output->Flush();
 }
 

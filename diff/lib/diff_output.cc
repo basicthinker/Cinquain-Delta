@@ -32,12 +32,12 @@ VCDIFFOutput::~VCDIFFOutput() {
 
 }
 
-void VCDIFFOutput::Apend(DiffInstruction instruction, long begin, long end) {
+void VCDIFFOutput::Append(DiffInstruction instruction, long begin, long end) {
 
 }
 
-void VCDIFFOutput::Correct(const long begin, const long end) {
-  
+long VCDIFFOutput::Correct(const long begin, const long end) {
+  return 0;
 }
 
 void VCDIFFOutput::Flush() {

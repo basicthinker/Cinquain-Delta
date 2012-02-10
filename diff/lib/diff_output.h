@@ -36,9 +36,9 @@ enum DiffInstruction {
 
 class DiffOutputInterface {
   public:
-    virtual void Apend(DiffInstruction instruction,
+    virtual void Append(DiffInstruction instruction,
                        const long begin, const long end) = 0;
-    virtual void Correct(const long begin, const long end) = 0;
+    virtual long Correct(const long begin, const long end) = 0;
     virtual void Flush() = 0;
     virtual ~DiffOutputInterface() {}
 };
@@ -49,8 +49,8 @@ class DiffOutputInterface {
 class VCDIFFOutput : public DiffOutputInterface {
   public:
     VCDIFFOutput(char *file_name);
-    void Apend(DiffInstruction instruction, const long begin, const long end);
-    void Correct(const long begin, const long end);
+    void Append(DiffInstruction instruction, const long begin, const long end);
+    long Correct(const long begin, const long end);
     void Flush();
     ~VCDIFFOutput();
 };
