@@ -25,6 +25,8 @@
 #ifndef CINQUAIN_DELTA_DIFF_OUTPUT_H_
 #define CINQUAIN_DELTA_DIFF_OUTPUT_H_
 
+typedef unsigned int offset_t;
+
 class DiffOutputInterface;
 
 typedef DiffOutputInterface DiffOutput;
@@ -37,8 +39,8 @@ enum DiffInstruction {
 class DiffOutputInterface {
   public:
     virtual void Append(DiffInstruction instruction,
-                       const long begin, const long end) = 0;
-    virtual long Correct(const long begin, const long end) = 0;
+                       const offset_t begin, const offset_t end) = 0;
+    virtual offset_t Correct(const offset_t begin, const offset_t end) = 0;
     virtual void Flush() = 0;
     virtual ~DiffOutputInterface() {}
 };
@@ -46,13 +48,19 @@ class DiffOutputInterface {
 
 /* Implementing classes */
 
-class VCDIFFOutput : public DiffOutputInterface {
+class InMemoryOutput : public DiffOutputInterface {
   public:
-    VCDIFFOutput(char *file_name);
-    void Append(DiffInstruction instruction, const long begin, const long end);
-    long Correct(const long begin, const long end);
+    InMemoryOutput(const int init_size);
+    void Append(DiffInstruction instruction, const offset_t begin, const offset_t end);
+    offset_t Correct(const offset_t begin, const offset_t end);
     void Flush();
-    ~VCDIFFOutput();
+    ~InMemoryOutput();
+  
+  private:
+    typedef struct {
+      offset_t offset_v;
+      offset_t compound;
+    } Instruction;
 };
 
 #endif // CINQUAIN_DELTA_DIFF_OUTPUT_H_

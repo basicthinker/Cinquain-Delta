@@ -31,8 +31,8 @@ using std::max;
 
 CinquainEncoder::CinquainEncoder(int hashtable_length, int seed_length) 
     : seed_length_(seed_length) {
-  hashtable_r_ = new IntHashtable(kPrime - 1);
-  hashtable_v_ = new IntHashtable(kPrime - 1);
+  hashtable_r_ = new IntHashtable<offset_t>(kPrime - 1);
+  hashtable_v_ = new IntHashtable<offset_t>(kPrime - 1);
   window_r_ = new NumericalWindow(seed_length_);
   window_v_ = new NumericalWindow(seed_length_);
   current_r_ = 0L;
@@ -57,20 +57,20 @@ void CinquainEncoder::Reset() {
   suffix_v_ = 0L;
 }
 
-void CinquainEncoder::Encode(Byte *string_r, const long length_r, 
-                             Byte *string_v, const long length_v,
+void CinquainEncoder::Encode(Byte *string_r, const offset_t length_r, 
+                             Byte *string_v, const offset_t length_v,
                              DiffOutput *output) {
   if (length_r < seed_length_ || length_v < seed_length_) return;
   
   // Following comments denote step numbers in the original paper
   Reset(); // (1)(2)
   
-  uint64_t match_v; // v_m
-  uint64_t match_r; // r_m
-  long match_length; // l
+  offset_t match_v; // v_m
+  offset_t match_r; // r_m
+  offset_t match_length; // l
   
-  uint64_t fingerprint_v = 0;
-  uint64_t fingerprint_r = 0;
+  Int fingerprint_v = 0;
+  Int fingerprint_r = 0;
   bool to_clear_window_v = true;
   bool to_clear_window_r = true;
   while ((current_v_ + seed_length_ <= length_v) 
@@ -123,14 +123,14 @@ void CinquainEncoder::Encode(Byte *string_r, const long length_r,
     Byte *position_r = string_r + match_r;
     Byte *position_v = string_v + match_v;
     // Extend forwards
-    long forward_length = seed_length_;
-    long limit = min(length_r - match_r, length_v - match_v);
+    offset_t forward_length = seed_length_;
+    offset_t limit = min(length_r - match_r, length_v - match_v);
     while (forward_length < limit && 
           *(position_r + forward_length) == *(position_v + forward_length)) {
       ++forward_length;
     }
     // Extend backwards
-    long backward_length = 0;
+    offset_t backward_length = 0;
     limit = min(match_r, match_v);
     while (backward_length < limit &&
           *(--position_r) == *(--position_v)) {

@@ -25,48 +25,53 @@
 #ifndef CINQUAIN_DELTA_INT_HASHTABLE_H_
 #define CINQUAIN_DELTA_INT_HASHTABLE_H_
 
-typedef unsigned long long uint64_t;
-
+template <typename ValueType>
 class IntHashtable {
   public:
-    IntHashtable(uint64_t max_key);
+    IntHashtable(unsigned int max_key);
     ~IntHashtable();
     void Reset();
   
-    void SetValue(uint64_t key, uint64_t value);
-    bool HasValue(uint64_t key);
-    uint64_t GetValue(uint64_t key);
+    void SetValue(unsigned int key, const ValueType &value);
+    bool HasValue(unsigned int key);
+    const ValueType &GetValue(unsigned int key);
   
   private:
-    const uint64_t num_buckets_;
-    uint64_t * buckets_;
+    const unsigned int num_buckets_;
+    unsigned int * buckets_;
     
-    static const uint64_t kNull = 0xffffffffffffffff;
+    static const unsigned int kNull = 0xffffffff;
 };
 
-inline IntHashtable::IntHashtable(uint64_t max_key)
+template <typename ValueType>
+inline IntHashtable<ValueType>::IntHashtable(unsigned int max_key)
     : num_buckets_(max_key + 1) {
-  buckets_ = new uint64_t[num_buckets_];
+  buckets_ = new ValueType[num_buckets_];
   Reset();
 }
 
-inline IntHashtable::~IntHashtable(){
+template <typename ValueType>
+inline IntHashtable<ValueType>::~IntHashtable(){
   delete buckets_;
 }
 
-inline void IntHashtable::Reset() {
-  memset(buckets_, 0xff, sizeof(uint64_t) * num_buckets_);
+template <typename ValueType>
+inline void IntHashtable<ValueType>::Reset() {
+  memset(buckets_, 0xff, sizeof(unsigned int) * num_buckets_);
 }
 
-inline void IntHashtable::SetValue(uint64_t key, uint64_t value) {
+template <typename ValueType>
+inline void IntHashtable<ValueType>::SetValue(unsigned int key, const ValueType &value) {
   buckets_[key] = value;
 }
 
-inline bool IntHashtable::HasValue(uint64_t key) {
+template <typename ValueType>
+inline bool IntHashtable<ValueType>::HasValue(unsigned int key) {
   return buckets_[key] != kNull;
 }
 
-inline uint64_t IntHashtable::GetValue(uint64_t key) {
+template <typename ValueType>
+inline const ValueType &IntHashtable<ValueType>::GetValue(unsigned int key) {
   return buckets_[key];
 }
 

@@ -32,8 +32,8 @@
 class CinquainEncoder {
   public:
     CinquainEncoder(int hashtable_length, int seed_length);
-    void Encode(Byte *reference, const long length_r,
-                Byte *version, const long length_v,
+    void Encode(Byte *reference, const offset_t length_r,
+                Byte *version, const offset_t length_v,
                 DiffOutput *output);
     ~CinquainEncoder();
   
@@ -41,14 +41,14 @@ class CinquainEncoder {
     void Reset();
 
     // Following comments denote symbols in the original paper
-    const int seed_length_; // p
-    IntHashtable *hashtable_r_; // H_R
-    IntHashtable *hashtable_v_; // H_V
+    const offset_t seed_length_; // p
+    IntHashtable<offset_t> *hashtable_r_; // H_R
+    IntHashtable<offset_t> *hashtable_v_; // H_V
     RabinWindow *window_r_; // F_R
     RabinWindow *window_v_; // F_V
-    long current_r_; // r_c
-    long current_v_; // v_c
-    long suffix_v_; // v_s
+    offset_t current_r_; // r_c
+    offset_t current_v_; // v_c
+    offset_t suffix_v_; // v_s
 };
 
 #endif // CINQUAIN_DELTA_AJTI_DIFF_H_

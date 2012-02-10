@@ -24,23 +24,24 @@
 
 #include "diff_output.h"
 
-VCDIFFOutput::VCDIFFOutput(char *file_name) {
+InMemoryOutput::InMemoryOutput(const int init_size) {
 
 }
 
-VCDIFFOutput::~VCDIFFOutput() {
+InMemoryOutput::~InMemoryOutput() {
 
 }
 
-void VCDIFFOutput::Append(DiffInstruction instruction, long begin, long end) {
+void InMemoryOutput::Append(DiffInstruction instruction,
+                            const offset_t begin, const offset_t end) {
 
 }
 
-long VCDIFFOutput::Correct(const long begin, const long end) {
+offset_t InMemoryOutput::Correct(const offset_t begin, const offset_t end) {
   return 0;
 }
 
-void VCDIFFOutput::Flush() {
+void InMemoryOutput::Flush() {
 
 }
 
