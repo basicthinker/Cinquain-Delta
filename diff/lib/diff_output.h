@@ -25,21 +25,20 @@
 #ifndef CINQUAIN_DELTA_DIFF_OUTPUT_H_
 #define CINQUAIN_DELTA_DIFF_OUTPUT_H_
 
-typedef unsigned int offset_t;
+#include "delta_instruction.h"
+#include <vector>
+using std::vector;
 
 class DiffOutputInterface;
+class InMemoryOutput;
 
-typedef DiffOutputInterface DiffOutput;
+typedef DiffOutputInterface DiffOutput; // one of the above classes
 
-enum DiffInstruction {
-  ADD,
-  COPY
-};
 
 class DiffOutputInterface {
   public:
-    virtual void Append(DiffInstruction instruction,
-                       const offset_t begin, const offset_t end) = 0;
+    virtual void Append(InstructionType instruction,
+                        const off_t begin, const off_t end) = 0;
     virtual offset_t Correct(const offset_t begin, const offset_t end) = 0;
     virtual void Flush() = 0;
     virtual ~DiffOutputInterface() {}
@@ -51,16 +50,14 @@ class DiffOutputInterface {
 class InMemoryOutput : public DiffOutputInterface {
   public:
     InMemoryOutput(const int init_size);
-    void Append(DiffInstruction instruction, const offset_t begin, const offset_t end);
+    void Append(InstructionType instruction, const off_t begin, const off_t end);
     offset_t Correct(const offset_t begin, const offset_t end);
     void Flush();
     ~InMemoryOutput();
   
   private:
-    typedef struct {
-      offset_t offset_v;
-      offset_t compound;
-    } Instruction;
+    vector<DeltaInstruction> instructions;
 };
+
 
 #endif // CINQUAIN_DELTA_DIFF_OUTPUT_H_

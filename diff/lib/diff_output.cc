@@ -32,8 +32,8 @@ InMemoryOutput::~InMemoryOutput() {
 
 }
 
-void InMemoryOutput::Append(DiffInstruction instruction,
-                            const offset_t begin, const offset_t end) {
+void InMemoryOutput::Append(InstructionType instruction,
+                            const off_t begin, const off_t end) {
 
 }
 
