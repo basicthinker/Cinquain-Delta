@@ -140,12 +140,16 @@ void CinquainEncoder::Encode(Byte *string_r, const offset_t length_r,
     match_v -= backward_length;
     match_length = backward_length + forward_length;
     
+    offset_t match_end_v = match_v + match_length;
     if (suffix_v_ <= match_v) { // (6)
       output->Append(ADD, suffix_v_, match_v);
-      output->Append(COPY, match_v, match_v + match_length);
-      suffix_v_ = match_v + match_length;
+      output->Append(COPY, match_v, match_end_v);
+      suffix_v_ = match_end_v;
+    } else if (match_v < suffix_v_ && suffix_v_ < match_end_v) {
+      output->TailCorrect(match_v);
+      suffix_v_ = match_end_v;
     } else {
-      suffix_v_ = output->Correct(match_v, match_v + match_length);
+      output->GeneralCorrect(match_v, match_end_v);
     }
     
     // Step (7)

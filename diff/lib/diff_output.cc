@@ -24,23 +24,6 @@
 
 #include "diff_output.h"
 
-InMemoryOutput::InMemoryOutput(const int init_size) {
-
-}
-
-InMemoryOutput::~InMemoryOutput() {
-
-}
-
-void InMemoryOutput::Append(InstructionType instruction,
-                            const off_t begin, const off_t end) {
-
-}
-
-offset_t InMemoryOutput::Correct(const offset_t begin, const offset_t end) {
-  return 0;
-}
-
 void InMemoryOutput::Flush() {
 
 }

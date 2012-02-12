@@ -38,8 +38,9 @@ typedef DiffOutputInterface DiffOutput; // one of the above classes
 class DiffOutputInterface {
   public:
     virtual void Append(InstructionType instruction,
-                        const off_t begin, const off_t end) = 0;
-    virtual offset_t Correct(const offset_t begin, const offset_t end) = 0;
+                        const offset_t begin, const offset_t end) = 0;
+    virtual void TailCorrect(const offset_t begin) = 0;
+    virtual void GeneralCorrect(const offset_t begin, const offset_t end) = 0;
     virtual void Flush() = 0;
     virtual ~DiffOutputInterface() {}
 };
@@ -49,15 +50,40 @@ class DiffOutputInterface {
 
 class InMemoryOutput : public DiffOutputInterface {
   public:
-    InMemoryOutput(const int init_size);
-    void Append(InstructionType instruction, const off_t begin, const off_t end);
-    offset_t Correct(const offset_t begin, const offset_t end);
+    explicit InMemoryOutput(const int capacity);
+    void Append(InstructionType instruction,
+                const offset_t begin, const offset_t end);
+    void TailCorrect(const offset_t begin);
+    void GeneralCorrect(const offset_t begin, offset_t end);
     void Flush();
-    ~InMemoryOutput();
   
   private:
-    vector<DeltaInstruction> instructions;
+    vector<DeltaInstruction> instructions_;
 };
 
+inline InMemoryOutput::InMemoryOutput(const int capacity) {
+  instructions_.reserve(capacity);
+}
+
+inline void InMemoryOutput::Append(InstructionType instruction,
+                            const offset_t begin, const offset_t end) {
+  if (begin >= end) return;
+  instructions_.push_back(DeltaInstruction(instruction, begin, end - begin));
+}
+
+inline void InMemoryOutput::TailCorrect(const offset_t begin) {
+  DeltaInstruction tail;
+  while ((tail = instructions_.back()).type() == INVALID 
+         || tail.offset() >= begin) {
+    instructions_.pop_back();
+  }
+  if (tail.type() == ADD) {
+    tail.set_length(begin - tail.offset());
+  }
+}
+
+inline void InMemoryOutput::GeneralCorrect(const offset_t begin, offset_t end) {
+  
+}
 
 #endif // CINQUAIN_DELTA_DIFF_OUTPUT_H_

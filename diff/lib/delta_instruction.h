@@ -29,64 +29,59 @@ typedef unsigned int offset_t;
 
 enum InstructionType {
   ADD = 0,
-  COPY = 1
+  COPY = 1,
+  INVALID = -1
 };
 
 class DeltaInstruction {
 public:
-  DeltaInstruction(InstructionType type, offset_t offset, offset_t attribute = 0);
-  bool IsValid();
-  void SetInvalid();
-  void SetValid();
-  InstructionType GetType();
-  offset_t GetOffset();
-  offset_t GetAttribute();
+  DeltaInstruction();
+  DeltaInstruction(InstructionType type, offset_t offset, offset_t length);
+  InstructionType type() const;
+  void set_type(InstructionType type);
+  offset_t offset() const;
+  offset_t length() const;
+  void set_length(const offset_t length);
   bool operator <(const DeltaInstruction &other) const;
 private:
-  offset_t offset_v_; // the LSB denotes validity
-  offset_t attribute_; // the LSB denotes instruction type
+  offset_t offset_;
+  offset_t length_;
+  InstructionType type_;
 };
 
+inline DeltaInstruction::DeltaInstruction()
+    : offset_(0), length_(0), type_(INVALID){
+  
+}
+
 inline DeltaInstruction::DeltaInstruction(InstructionType type,
-                                        offset_t offset, offset_t attribute) {
-  offset_v_ = offset << 1 | 1;
-  switch (type) {
-    case ADD:
-      attribute_ = ADD;
-      break;
-    case COPY:
-      attribute_ = attribute << 1 | COPY;
-      break;
-  }
+                                        offset_t offset, offset_t length)
+    : offset_(offset), length_(length), type_(type){
+
 }
 
-inline bool DeltaInstruction::IsValid() {
-  return (char)offset_v_ ^ 0x01;
+inline InstructionType DeltaInstruction::type() const {
+  return type_;
 }
 
-inline void DeltaInstruction::SetInvalid() {
-  offset_v_ >>= 1;
-  offset_v_ <<= 1;
+inline void DeltaInstruction::set_type(InstructionType type) {
+  type_ = type;
 }
 
-inline void DeltaInstruction::SetValid() {
-  offset_v_ |= 1;
+inline offset_t DeltaInstruction::offset() const {
+  return offset_;
 }
 
-inline InstructionType DeltaInstruction::GetType() {
-  return InstructionType((char)attribute_ ^ 0x01);
+inline offset_t DeltaInstruction::length() const {
+  return length_;
 }
 
-inline offset_t DeltaInstruction::GetOffset() {
-  return offset_v_ >> 1;
-}
-
-inline offset_t DeltaInstruction::GetAttribute() {
-  return attribute_ >> 1;
+inline void DeltaInstruction::set_length(const offset_t length) {
+  length_ = length;
 }
 
 inline bool DeltaInstruction::operator<(const DeltaInstruction &other) const {
-  return this->offset_v_ < other.offset_v_;
+  return this->offset_ < other.offset_;
 }
 
 #endif // CINQUAIN_DELTA_INSTRUCTION_H_
