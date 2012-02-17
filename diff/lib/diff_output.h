@@ -27,7 +27,9 @@
 
 #include "delta_instruction.h"
 #include <vector>
+#include <algorithm>
 using std::vector;
+using std::upper_bound;
 
 class DiffOutputInterface;
 class InMemoryOutput;
@@ -38,9 +40,10 @@ typedef DiffOutputInterface DiffOutput; // one of the above classes
 class DiffOutputInterface {
   public:
     virtual void Append(InstructionType instruction,
-                        const offset_t begin, const offset_t end) = 0;
-    virtual void TailCorrect(const offset_t begin) = 0;
-    virtual void GeneralCorrect(const offset_t begin, const offset_t end) = 0;
+                        const offset_t offset, const offset_t attribute) = 0;
+  virtual void TailCorrect(const offset_t begin_v, const offset_t match_r) = 0;
+  virtual void GeneralCorrect(const offset_t begin_v, const offset_t end_v,
+                              const offset_t match_r) = 0;
     virtual void Flush() = 0;
     virtual ~DiffOutputInterface() {}
 };
@@ -52,9 +55,10 @@ class InMemoryOutput : public DiffOutputInterface {
   public:
     explicit InMemoryOutput(const int capacity);
     void Append(InstructionType instruction,
-                const offset_t begin, const offset_t end);
-    void TailCorrect(const offset_t begin);
-    void GeneralCorrect(const offset_t begin, offset_t end);
+                const offset_t offset, const offset_t attribute);
+    void TailCorrect(const offset_t begin_v, const offset_t match_r);
+    void GeneralCorrect(const offset_t begin_v, const offset_t end_v,
+                        const offset_t match_r);
     void Flush();
   
   private:
@@ -66,24 +70,28 @@ inline InMemoryOutput::InMemoryOutput(const int capacity) {
 }
 
 inline void InMemoryOutput::Append(InstructionType instruction,
-                            const offset_t begin, const offset_t end) {
-  if (begin >= end) return;
-  instructions_.push_back(DeltaInstruction(instruction, begin, end - begin));
+                            const offset_t offset_v, const offset_t attribute) {
+  instructions_.push_back(DeltaInstruction(instruction, offset_v, attribute));
 }
 
-inline void InMemoryOutput::TailCorrect(const offset_t begin) {
+inline void InMemoryOutput::TailCorrect(const offset_t begin_v,
+                                        const offset_t match_r) {
   DeltaInstruction tail;
-  while ((tail = instructions_.back()).type() == INVALID 
-         || tail.offset() >= begin) {
+  while ((tail = instructions_.back()).type() == INVALID
+         || tail.offset() >= begin_v) {
     instructions_.pop_back();
   }
   if (tail.type() == ADD) {
-    tail.set_length(begin - tail.offset());
+    tail.set_attribute(begin_v - tail.offset());
   }
+  Append(COPY, begin_v, match_r);
 }
 
-inline void InMemoryOutput::GeneralCorrect(const offset_t begin, offset_t end) {
-  
+inline void InMemoryOutput::GeneralCorrect(const offset_t begin_v,
+                                           const offset_t end_v,
+                                           const offset_t match_r) {
+  vector<DeltaInstruction>::iterator overlap_end =
+    upper_bound(instructions_.begin(), instructions_.end(), end_v);
 }
 
 #endif // CINQUAIN_DELTA_DIFF_OUTPUT_H_
