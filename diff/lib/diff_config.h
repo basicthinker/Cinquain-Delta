@@ -12,21 +12,20 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * 
+ *
  */
 
 //
-//  diff_test.cpp
+//  diff_config.h
 //  Cinquain-Delta
 //
-//  Created by Jinglei Ren <jinglei.ren@gmail.com> on 2/5/12.
+//  Created by Jinglei Ren <jinglei.ren@gmail.com> on 2/19/12.
 //
 
-#include "ajti_diff.h"
-#include "diff_config.h"
-#include <iostream>
+#ifndef CINQUAIN_DELTA_DIFF_CONFIG_H_
+#define CINQUAIN_DELTA_DIFF_CONFIG_H_
 
-int main (int argc, const char * argv[])
-{
-  return 0;
-}
+const int kInitNumInstructions = 64;
+const int kSeedLength = 64;
+
+#endif // CINQUAIN_DELTA_DIFF_CONFIG_H_
