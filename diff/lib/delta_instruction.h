@@ -36,20 +36,22 @@ enum InstructionType {
 class DeltaInstruction {
 public:
   DeltaInstruction();
-  DeltaInstruction(InstructionType type, offset_t offset, offset_t attribute);
+  DeltaInstruction(InstructionType type, offset_t offset,
+                   offset_t attribute = 0);
   
   InstructionType type() const;
   void set_type(InstructionType type);
   
   // Returns the offset on the version string
   offset_t offset() const;
+  void set_offset(const offset_t offset);
   
   // Returns the length for ADD instruction or
   // the offset on the reference string for COPY instruction.
   offset_t attribute() const;
   void set_attribute(const offset_t attribute);
   
-  void Reset(InstructionType type, offset_t offset, offset_t attribute);
+  void Reset(InstructionType type, offset_t offset, offset_t attribute = 0);
   bool IsValid();
   void SetInvalid();
   
@@ -97,6 +99,10 @@ inline void DeltaInstruction::SetInvalid() {
 
 inline offset_t DeltaInstruction::offset() const {
   return offset_;
+}
+
+inline void DeltaInstruction::set_offset(const offset_t offset) {
+  offset_ = offset;
 }
 
 inline offset_t DeltaInstruction::attribute() const {
