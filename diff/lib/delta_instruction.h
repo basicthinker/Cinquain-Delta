@@ -28,8 +28,9 @@
 typedef unsigned int offset_t;
 
 enum InstructionType {
-  ADD = 0,
-  COPY = 1,
+  END = 0,
+  ADD = 1,
+  COPY = 2,
   INVALID = -1
 };
 
@@ -59,8 +60,8 @@ public:
   
 private:
   offset_t offset_;
-  offset_t attribute_;
   InstructionType type_;
+  offset_t attribute_;
 };
 
 inline DeltaInstruction::DeltaInstruction()
