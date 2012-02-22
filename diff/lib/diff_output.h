@@ -50,8 +50,6 @@ class DiffOutputInterface {
                                 const offset_t end_v,
                                 const offset_t match_r) = 0;
     virtual void Flush() = 0;
-    virtual offset_t GetLength() = 0;
-    virtual offset_t Write(char *output, const offset_t length) = 0;
     virtual ~DiffOutputInterface() {}
 };
 
@@ -60,8 +58,8 @@ class DiffOutputInterface {
 
 class InMemoryOutput : public DiffOutputInterface {
   public:
-    explicit InMemoryOutput(char *string_r, char *string_v,
-                            size_t symbol_size, const int capacity);
+    explicit InMemoryOutput(const char *string_r, const char *string_v,
+                            const int capacity, char *&output);
     ~InMemoryOutput();
   
     void Append(InstructionType instruction,
@@ -70,31 +68,25 @@ class InMemoryOutput : public DiffOutputInterface {
     void GeneralCorrect(const offset_t begin_v, const offset_t end_v,
                         const offset_t match_r);
     void Flush();
-    offset_t GetLength();
-    offset_t Write(char *output, const offset_t length);
   
   private:
     vector<DeltaInstruction> instructions_;
-    DeltaInstruction *header_;
-    int num_instructions_;
-  
+
     const char *string_r_;
     const char *string_v_;
-    const size_t symbol_size_;
-    offset_t length_;
+    char *&output_;
 };
 
-inline InMemoryOutput::InMemoryOutput(char *string_r, char *string_v,
-                                      size_t symbol_size, const int capacity) 
-    : string_r_(string_r), string_v_(string_v),
-      header_(0), num_instructions_(0),
-      symbol_size_(symbol_size), length_(0) {
+inline InMemoryOutput::InMemoryOutput(const char *string_r, const char *string_v,
+                                      const int capacity, char *&output) 
+    : string_r_(string_r), string_v_(string_v), output_(output) {
   instructions_.reserve(capacity);
+  output_ = 0;
 }
 
 inline InMemoryOutput::~InMemoryOutput() {
-  if (header_) {
-    free(header_);
+  if (output_) {
+    free(output_);
   }
 }
 

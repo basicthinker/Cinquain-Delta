@@ -27,14 +27,14 @@
 
 #include "rabin_fingerprint.h"
 #include "int_hashtable.h"
-#include "diff_output.h"
+#include "delta_output.h"
 
 class CinquainEncoder {
   public:
     CinquainEncoder(int hashtable_length, int seed_length);
     void Encode(Byte *reference, const offset_t length_r,
                 Byte *version, const offset_t length_v,
-                DiffOutput *output);
+                DiffOutput &output);
     ~CinquainEncoder();
   
   private:

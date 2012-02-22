@@ -22,15 +22,15 @@
 //  Created by Jinglei Ren <jinglei.ren@gmail.com> on 2/4/12.
 //
 
-#include "diff_output.h"
+#include "delta_output.h"
 
 void InMemoryOutput::Flush() {
-  if (header_) free(header_);
+  if (output_) free(output_);
   
-  header_ = (DeltaInstruction *)
+  const DeltaInstruction *header_begin = (DeltaInstruction *)
       malloc(sizeof(DeltaInstruction) * instructions_.size());
   // Write header to buffer
-  DeltaInstruction *header_iter = header_;
+  DeltaInstruction *header_iter = (DeltaInstruction *)header_begin;
   for (InstructionIterator iter = instructions_.begin();
        iter != instructions_.end(); ++iter) {
     if (iter->IsValid()) {
@@ -38,52 +38,44 @@ void InMemoryOutput::Flush() {
       ++header_iter;
     }
   }
-  num_instructions_ = int(header_iter - header_);
+  const DeltaInstruction *header_end = header_iter;
   
-  length_ = 0;
-}
-
-offset_t InMemoryOutput::GetLength() {
-  if (length_) return length_;
-
   // Calculate version data length
   offset_t data_length = 0;
-  DeltaInstruction *header_iter = header_ + num_instructions_;
+  offset_t file_length = 0;
   offset_t last_offset = (--header_iter)->offset(); // EOF
-  while (header_iter > header_) {
+  while (header_iter > header_begin) {
     --header_iter;
     if (header_iter->type() == ADD) {
       data_length += (last_offset - header_iter->offset());
     }
+    file_length += (last_offset - header_iter->offset());
     last_offset = header_iter->offset();
-  } // when header_iter == header
+  } // when header_iter == header_begin
   
-  return length_ = data_length + num_instructions_ * sizeof(DeltaInstruction);
-}
-
-offset_t InMemoryOutput::Write(char *output, const offset_t length) {
-  if (length != length_) {
-    return 0;
-  }
+  offset_t memcpy_length =
+      (offset_t)(header_iter - header_begin) * sizeof(DeltaInstruction);
+  memcpy(output_, header_begin, memcpy_length);
+  output_ += memcpy_length;
   
-  offset_t memcpy_length = num_instructions_ * sizeof(DeltaInstruction);
-  memcpy(output, header_, memcpy_length);
-  output += memcpy_length;
- 
-  for (int i = 0; i < num_instructions_ - 1; ++i) {
-    switch (header_[i].type()) {
+  while (header_iter < header_end) {
+    switch (header_iter->type()) {
       case ADD:
-        memcpy_length = header_[i + 1].offset() - header_[i].offset();
-        memcpy(output, string_v_ + header_[i].offset(), memcpy_length);
-        output += memcpy_length;
+        memcpy_length = (header_iter + 1)->offset() - header_iter->offset();
+        memcpy(output_, string_v_ + header_iter->offset(), memcpy_length);
+        output_ += memcpy_length;
         break;
       case COPY:
-        memcpy_length = header_[i + 1].offset() - header_[i].offset();
-        memcpy(output, string_r_ + header_[i].offset(), memcpy_length);
-        output += memcpy_length;
+        memcpy_length = (header_iter + 1)->offset() - header_iter->offset();
+        memcpy(output_, string_r_ + header_iter->offset(), memcpy_length);
+        output_ += memcpy_length;
         break;
-      case END:
-        return header_[i].offset();
+      default:
+        break;
     }
+    ++header_iter;
   }
+  
+  free((void *)header_begin);
 }
+
