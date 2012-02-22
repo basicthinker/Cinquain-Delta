@@ -22,6 +22,35 @@
 //  Created by Jinglei Ren <jinglei.ren@gmail.com> on 2/4/12.
 //
 
+/* Compact Format of Output for Ajti's Algorithm (NOT IN USE) */
+// Offset          | Size                     | Number | Note   
+//
+// Address Section: addresses in reference for each copy instruction
+// 0               | sizeof(offset_t)         | 1      | = end_address
+// NEXT            | sizeof(offset_t)         | ANY
+//
+// Instruction Section: delta instructions
+// end_address     | sizeof(offset_t)         | 1      | = end_instruction
+// NEXT            | sizeof(offset_t) + sizeof(InstructionType) | ANY
+//
+// Data Section: data for add instructions
+// end_instruction | sizeof(offset_t)         | 1      | = version_file_size
+// NEXT            | ANY                      | ANY
+
+/* Extensible Format of Output (IN USE) */
+// Offset          | Size                     | Number | Note
+//
+// Instruction Section: delta instructions
+// 0               | sizeof(offset_t)         | 1      | = end_instruction
+// NEXT            | sizeof(DeltaInstruction) | ANY
+//
+// Data Section: data for add instructions
+// end_instruction | sizeof(offset_t)         | 1      | = version_file_size
+// NEXT            | ANY                      | ANY
+
+// NEXT = the address following the last specified part
+// ANY = some reasonable number
+
 #ifndef CINQUAIN_DELTA_DIFF_OUTPUT_H_
 #define CINQUAIN_DELTA_DIFF_OUTPUT_H_
 
@@ -49,7 +78,7 @@ class DiffOutputInterface {
     virtual void GeneralCorrect(const offset_t begin_v,
                                 const offset_t end_v,
                                 const offset_t match_r) = 0;
-    virtual void Flush() = 0;
+    virtual offset_t Flush() = 0;
     virtual ~DiffOutputInterface() {}
 };
 
@@ -67,7 +96,7 @@ class InMemoryOutput : public DiffOutputInterface {
     void TailCorrect(const offset_t begin_v, const offset_t match_r);
     void GeneralCorrect(const offset_t begin_v, const offset_t end_v,
                         const offset_t match_r);
-    void Flush();
+    offset_t Flush();
   
   private:
     vector<DeltaInstruction> instructions_;
