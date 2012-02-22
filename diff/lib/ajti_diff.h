@@ -27,7 +27,7 @@
 
 #include "rabin_fingerprint.h"
 #include "int_hashtable.h"
-#include "delta_output.h"
+#include "diff_output.h"
 
 class CinquainEncoder {
   public:
