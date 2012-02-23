@@ -78,7 +78,8 @@ class DiffOutputInterface {
     virtual void GeneralCorrect(const offset_t begin_v,
                                 const offset_t end_v,
                                 const offset_t match_r) = 0;
-    virtual offset_t Flush() = 0;
+    virtual void Flush() = 0;
+    virtual offset_t GetDeltaSize() = 0;
     virtual ~DiffOutputInterface() {}
 };
 
@@ -96,7 +97,8 @@ class InMemoryOutput : public DiffOutputInterface {
     void TailCorrect(const offset_t begin_v, const offset_t match_r);
     void GeneralCorrect(const offset_t begin_v, const offset_t end_v,
                         const offset_t match_r);
-    offset_t Flush();
+    void Flush();
+    offset_t GetDeltaSize();
   
   private:
     vector<DeltaInstruction> instructions_;
@@ -104,6 +106,8 @@ class InMemoryOutput : public DiffOutputInterface {
     const char *string_r_;
     const char *string_v_;
     char *&output_;
+    
+    offset_t delta_size_;
 };
 
 inline InMemoryOutput::InMemoryOutput(const char *string_r, const char *string_v,
@@ -111,6 +115,7 @@ inline InMemoryOutput::InMemoryOutput(const char *string_r, const char *string_v
     : string_r_(string_r), string_v_(string_v), output_(output) {
   instructions_.reserve(capacity);
   output_ = 0;
+  delta_size_ = 0;
 }
 
 inline InMemoryOutput::~InMemoryOutput() {
@@ -207,6 +212,10 @@ inline void InMemoryOutput::GeneralCorrect(const offset_t begin_v,
     logic_tail->SetInvalid();
     new_end->Reset(ADD, end_v);
   }
+}
+
+inline offset_t InMemoryOutput::GetDeltaSize() {
+  return delta_size_;
 }
 
 #endif // CINQUAIN_DELTA_DIFF_OUTPUT_H_

@@ -25,16 +25,35 @@
 #ifndef CINQUAIN_DELTA_DECODER_H_
 #define CINQUAIN_DELTA_DECODER_H_
 
+#include <string.h>
 #include "delta_instruction.h"
 
 class CinquainDecoder {
   public:
-    CinquainDecoder();
-    offset_t Decode(char *reference, char *delta, char *&output);
+    CinquainDecoder(char *&output);
+    void Decode(const char *reference, const char *delta);
+    offset_t GetVersionSize();
     ~CinquainDecoder();
   
   private:
-    char *output_;
+    char *&output_;
+    offset_t version_size_;
 };
+
+inline CinquainDecoder::CinquainDecoder(char *&output)
+    : output_(output) {
+  output_ = 0;
+  version_size_ = 0;
+}
+
+inline offset_t CinquainDecoder::GetVersionSize() {
+  return version_size_;
+}
+
+inline CinquainDecoder::~CinquainDecoder() {
+  if (output_) {
+    delete[] output_;
+  }
+}
 
 #endif // CINQUAIN_DELTA_DECODER_H_

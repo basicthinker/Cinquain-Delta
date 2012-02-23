@@ -24,16 +24,37 @@
 
 #include "delta_decoder.h"
 
-CinquainDecoder::CinquainDecoder() {
-  output_ = 0;
-}
-
-offset_t CinquainDecoder::Decode(char *reference, char *delta, char *&output) {
-  return 0;
-}
-
-CinquainDecoder::~CinquainDecoder() {
+void CinquainDecoder::Decode(const char *reference, const char *delta) {
+  const offset_t end_instruction = *((offset_t *)delta);
+  version_size_ = *((offset_t *)(delta + end_instruction));
+  const char *data_section = delta + end_instruction + sizeof(offset_t);
+  
   if (output_) {
-    delete output_;
+    delete[] output_;
+  }
+  output_ = new char[version_size_];
+  
+  DeltaInstruction *header_ptr = (DeltaInstruction *)(delta + sizeof(offset_t));
+  const DeltaInstruction *header_end = 
+      (DeltaInstruction *)(delta + end_instruction - sizeof(DeltaInstruction));
+  
+  offset_t length;
+  char *delta_ptr = output_;
+  while (header_ptr < header_end) {
+    switch (header_ptr->type()) {
+      case COPY:
+        length = (header_ptr + 1)->offset() - header_ptr->offset();
+        memcpy(delta_ptr, reference + header_ptr->attribute(), length);
+        delta_ptr += length;
+        break;
+      case ADD:
+        length = (header_ptr + 1)->offset() - header_ptr->offset();
+        memcpy(delta_ptr, data_section + header_ptr->attribute(), length);
+        delta_ptr += length;
+        break;
+      default:
+        break;
+    }
+    ++header_ptr;
   }
 }

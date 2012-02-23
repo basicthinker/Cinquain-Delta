@@ -24,7 +24,7 @@
 
 #include "diff_output.h"
 
-offset_t InMemoryOutput::Flush() {
+void InMemoryOutput::Flush() {
   if (output_) delete[] output_;
   
   const DeltaInstruction *header_begin = (DeltaInstruction *)
@@ -44,19 +44,19 @@ offset_t InMemoryOutput::Flush() {
   
   // Calculate version data length
   offset_t data_length = 0;
-  offset_t version_file_size = 0;
+  offset_t version_size = 0;
   for (header_ptr = (DeltaInstruction *)header_begin;
        header_ptr < header_end; ++header_ptr) {
     if (header_ptr->type() == ADD) {
       header_ptr->set_attribute(data_length);
       data_length += (header_ptr + 1)->offset() - header_ptr->offset();
     }
-    version_file_size += (header_ptr + 1)->offset() - header_ptr->offset();
+    version_size += (header_ptr + 1)->offset() - header_ptr->offset();
   }
   
-  offset_t delta_file_size = offset_t(sizeof(offset_t) + instruction_length + 
+  delta_size_ = offset_t(sizeof(offset_t) + instruction_length + 
       sizeof(offset_t) + data_length);
-  output_ = new char[delta_file_size];
+  output_ = new char[delta_size_];
   char *output_ptr = output_ptr;
   
   // Instruction Section
@@ -67,7 +67,7 @@ offset_t InMemoryOutput::Flush() {
   output_ptr += instruction_length;
   
   // Data Section
-  *((offset_t *)output_ptr) = version_file_size;
+  *((offset_t *)output_ptr) = version_size;
   output_ptr += sizeof(offset_t);
   
   offset_t memcpy_length;
@@ -81,7 +81,5 @@ offset_t InMemoryOutput::Flush() {
   }
   
   delete[] header_begin;
-  
-  return delta_file_size;
 }
 
