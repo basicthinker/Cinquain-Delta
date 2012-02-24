@@ -59,7 +59,7 @@ public:
   friend bool operator<(const int value, const DeltaInstruction &instruction);
   
 private:
-  offset_t offset_;
+  offset_t offset_; // placed first to get version_file_size in end instruction
   InstructionType type_;
   offset_t attribute_;
 };

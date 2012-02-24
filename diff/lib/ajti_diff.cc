@@ -60,8 +60,6 @@ void CinquainEncoder::Reset() {
 void CinquainEncoder::Encode(Byte *string_r, const offset_t length_r, 
                              Byte *string_v, const offset_t length_v,
                              DiffOutput &output) {
-  if (length_r < seed_length_ || length_v < seed_length_) return;
-  
   // Following comments denote step numbers in the original paper
   Reset(); // (1)(2)
   
@@ -142,7 +140,7 @@ void CinquainEncoder::Encode(Byte *string_r, const offset_t length_r,
     
     offset_t match_end_v = match_v + match_length;
     if (suffix_v_ <= match_v) { // (6)
-      output.Append(ADD, suffix_v_, match_v - suffix_v_);
+      output.Append(ADD, suffix_v_);
       output.Append(COPY, match_v, match_r);
       suffix_v_ = match_end_v;
     } else if (match_v < suffix_v_ && suffix_v_ < match_end_v) {
@@ -169,8 +167,9 @@ void CinquainEncoder::Encode(Byte *string_r, const offset_t length_r,
   } // while to Step (3)
   // Step (8)
   if (suffix_v_ < length_v) {
-    output.Append(ADD, suffix_v_, length_v);
+    output.Append(ADD, suffix_v_);
   }
+  output.Append(END, length_v);
   output.Flush();
 }
 

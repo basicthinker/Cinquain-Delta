@@ -35,8 +35,9 @@ void CinquainDecoder::Decode(const char *reference, const char *delta) {
   output_ = new char[version_size_];
   
   DeltaInstruction *header_ptr = (DeltaInstruction *)(delta + sizeof(offset_t));
-  const DeltaInstruction *header_end = 
-      (DeltaInstruction *)(delta + end_instruction - sizeof(DeltaInstruction));
+  const DeltaInstruction *header_end =
+      (DeltaInstruction *)(delta + end_instruction);
+      // version_file_size as the offset of end instruction
   
   offset_t length;
   char *delta_ptr = output_;

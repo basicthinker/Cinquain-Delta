@@ -26,8 +26,9 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 
-#include "ajti_diff.h"
 #include "diff_config.h"
+#include "ajti_diff.h"
+#include "delta_decoder.h"
 
 
 int main (int argc, const char * argv[])
@@ -58,9 +59,9 @@ int main (int argc, const char * argv[])
   }
   
   char *memory_r = (char *)mmap(NULL, file_stat_r.st_size,
-                                            PROT_READ, MAP_NOCACHE, file_r, 0);
+                                            PROT_READ, MAP_PRIVATE, file_r, 0);
   char *memory_v = (char *)mmap(NULL, file_stat_v.st_size,
-                                            PROT_READ, MAP_NOCACHE, file_v, 0);
+                                            PROT_READ, MAP_PRIVATE, file_v, 0);
   
   if (memory_r == MAP_FAILED || memory_v == MAP_FAILED) {
     munmap(memory_r, file_stat_r.st_size);
@@ -71,12 +72,53 @@ int main (int argc, const char * argv[])
     return -1;
   }
   
-  CinquainEncoder encoder(8 * 1024, 2);
-  char *memory_o;
-  InMemoryOutput output(memory_r, memory_v, 10, memory_o);
+  CinquainEncoder encoder(kPrime, kSeedLength);
+  char *memory_d;
+  InMemoryOutput output(memory_r, memory_v, kInitNumInstructions, memory_d);
   encoder.Encode((Byte *)memory_r, (offset_t)file_stat_r.st_size,
                  (Byte *)memory_v, (offset_t)file_stat_v.st_size, output);
 
+  // Print delta file
+  printf("Delta File (%d):\n", output.GetDeltaSize());
+  offset_t *offset_ptr = (offset_t *)memory_d;
+  printf("end_instruction = %d\n", *offset_ptr);
+  DeltaInstruction *instruction_ptr = (DeltaInstruction *)(memory_d + sizeof(offset_t));
+  while ((char *)instruction_ptr - memory_d <= *offset_ptr) {
+    switch (instruction_ptr->type()) {
+      case ADD:
+        printf("[%d] ADD [%d]\n",
+               instruction_ptr->offset(), instruction_ptr->attribute());
+        break;
+      case COPY:
+        printf("[%d] COPY [%d]\n",
+               instruction_ptr->offset(), instruction_ptr->attribute());
+        break;
+      default:
+        printf("[%d]\n", instruction_ptr->offset());
+        break;
+    }
+    ++instruction_ptr;
+  }
+  
+  char *memory_check;
+  CinquainDecoder decoder(memory_check);
+  decoder.Decode(memory_r, memory_d);
+  
+  // Print restored version file
+  printf("Restored Version (%d):\n", decoder.GetVersionSize());
+  for (char *symbol_ptr = memory_check;
+       symbol_ptr - memory_check < decoder.GetVersionSize(); ++symbol_ptr) {
+    printf("%c", *symbol_ptr);
+  }
+  printf("\n");
+  
+  if (file_stat_v.st_size != decoder.GetVersionSize()) {
+    printf("Wrong: version file sizes do not match.\n");
+  } else if (memcmp(memory_v, memory_check, decoder.GetVersionSize()) != 0) {
+    printf("Wrong: restored version file is not identical to the original.\n");
+  } else {
+    printf("Encoding/Decoding: OK.\n");
+  }
 
   munmap(memory_r, file_stat_r.st_size);
   munmap(memory_v, file_stat_v.st_size);

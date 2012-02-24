@@ -93,7 +93,7 @@ class InMemoryOutput : public DiffOutputInterface {
     ~InMemoryOutput();
   
     void Append(InstructionType instruction,
-                const offset_t offset, const offset_t attribute);
+                const offset_t offset, const offset_t attribute = 0);
     void TailCorrect(const offset_t begin_v, const offset_t match_r);
     void GeneralCorrect(const offset_t begin_v, const offset_t end_v,
                         const offset_t match_r);
@@ -120,7 +120,7 @@ inline InMemoryOutput::InMemoryOutput(const char *string_r, const char *string_v
 
 inline InMemoryOutput::~InMemoryOutput() {
   if (output_) {
-    free(output_);
+    delete[] output_;
   }
 }
 
@@ -148,7 +148,8 @@ inline void InMemoryOutput::TailCorrect(const offset_t begin_v,
 inline void InMemoryOutput::GeneralCorrect(const offset_t begin_v,
                                            const offset_t end_v,
                                            const offset_t match_r) {
-  InstructionIterator overlap_iter = 
+  InstructionIterator overlap_iter = instructions_.back().offset() <= end_v ?
+      instructions_.end() - 1 :
       upper_bound(instructions_.begin(), instructions_.end(), end_v) - 1;
   const InstructionIterator physical_tail = overlap_iter; // offset <= end_v
   
@@ -156,11 +157,11 @@ inline void InMemoryOutput::GeneralCorrect(const offset_t begin_v,
     --overlap_iter;
   }
   const InstructionIterator logic_tail = overlap_iter; // valid offset <= end_v
-  if (logic_tail->offset() <= begin_v) {
+  if (logic_tail->offset() <= begin_v) { // includes logic_tail->offset() == 0
     return; // when overlapping sequence is covered by an original instruction
   }
   
-  InstructionIterator logic_head_end = logic_tail;
+  InstructionIterator logic_head_end = logic_tail; // = overlap_iter
   --overlap_iter;
   while (overlap_iter->offset() > begin_v) {
     if (overlap_iter->IsValid()) {
@@ -176,37 +177,47 @@ inline void InMemoryOutput::GeneralCorrect(const offset_t begin_v,
   }
   const InstructionIterator logic_head = overlap_iter; // valid offset <= begin_v
   
-  // Where the new COPY resides
-  InstructionIterator new_position;
+  // Where the new COPY covers
+  InstructionIterator new_begin;
   InstructionIterator new_end;
   
   offset_t truncate_length = 0;
-  if (logic_head->type() == ADD) {
-    if (logic_head < physical_head || physical_tail->offset() == begin_v) {
-      new_position = physical_head;
-    } else if (!(physical_head + 1)->IsValid()) {
-      new_position = physical_head + 1;
-    }
-  } else if (logic_head->type() == COPY) {
-    new_position = logic_head_end;
-    truncate_length = logic_head_end->offset() - begin_v;
+  switch (logic_head->type()) {
+    case ADD:
+      if (logic_head < physical_head || physical_tail->offset() == begin_v) {
+        new_begin = physical_head;
+      } else if (!(physical_head + 1)->IsValid()) {
+        new_begin = physical_head + 1;
+      }
+      break;
+    case COPY:
+      new_begin = logic_head_end;
+      truncate_length = logic_head_end->offset() - begin_v;
+      break;
+    default:
+      break;
   }
   
-  if (logic_tail->type() == ADD) {
-    if (physical_tail->offset() < end_v && !(physical_tail + 1)->IsValid()) {
-      new_end = physical_tail + 1;
-    } else {
-      new_end = physical_tail;
-    }
-  } else if (logic_tail->type() == COPY) {
-    new_end = logic_tail;
+  switch (logic_tail->type()) {
+    case ADD:
+      if (physical_tail->offset() < end_v && !(physical_tail + 1)->IsValid()) {
+        new_end = physical_tail + 1;
+      } else {
+        new_end = physical_tail;
+      }
+      break;
+    case COPY:
+      new_end = logic_tail;
+      break;
+    default:
+      break;
   }
   
-  if (new_position >= new_end) {
+  if (new_begin >= new_end) {
     return; // when there is no room for new instruction
   }
   
-  new_position->Reset(COPY, begin_v + truncate_length,
+  new_begin->Reset(COPY, begin_v + truncate_length,
                       match_r + truncate_length);
   if (logic_tail->type() == ADD) {
     logic_tail->SetInvalid();

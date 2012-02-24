@@ -57,7 +57,7 @@ void InMemoryOutput::Flush() {
   delta_size_ = offset_t(sizeof(offset_t) + instruction_length + 
       sizeof(offset_t) + data_length);
   output_ = new char[delta_size_];
-  char *output_ptr = output_ptr;
+  char *output_ptr = output_;
   
   // Instruction Section
   *((offset_t *)output_ptr) = instruction_length + sizeof(offset_t);
