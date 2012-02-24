@@ -54,6 +54,7 @@ void CinquainDecoder::Decode(const char *reference, const char *delta) {
         delta_ptr += length;
         break;
       default:
+        throw "[CinquainDecoder::Decode] Invalid type for header_ptr.";
         break;
     }
     ++header_ptr;

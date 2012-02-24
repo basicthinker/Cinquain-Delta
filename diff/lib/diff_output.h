@@ -184,44 +184,55 @@ inline void InMemoryOutput::GeneralCorrect(const offset_t begin_v,
   offset_t truncate_length = 0;
   switch (logic_head->type()) {
     case ADD:
-      if (logic_head < physical_head || physical_tail->offset() == begin_v) {
+      if (logic_head < physical_head) {
         new_begin = physical_head;
-      } else if (!(physical_head + 1)->IsValid()) {
+      } else if (logic_head->offset() == begin_v) {
+        new_begin = logic_head;
+      } else {
         new_begin = physical_head + 1;
       }
       break;
     case COPY:
-      new_begin = logic_head_end;
-      truncate_length = logic_head_end->offset() - begin_v;
+      if (logic_head->offset() < begin_v) {
+        new_begin = logic_head_end;
+        truncate_length = logic_head_end->offset() - begin_v;
+      } else if (logic_head->offset() == begin_v) {
+        new_begin = logic_head;
+      } else {
+        throw "[InMemoryOutput::GeneralCorrect] Invalid logic_head.";
+      }
       break;
     default:
+      throw "[InMemoryOutput::GeneralCorrect] Invalid type for logic_head.";
       break;
   }
   
   switch (logic_tail->type()) {
     case ADD:
-      if (physical_tail->offset() < end_v && !(physical_tail + 1)->IsValid()) {
+      if (physical_tail->offset() < end_v && 
+          physical_tail + 1 != instructions_.end() &&
+          !(physical_tail + 1)->IsValid()) {
         new_end = physical_tail + 1;
       } else {
         new_end = physical_tail;
       }
+      if (new_begin < new_end) {
+        logic_tail->SetInvalid();
+        new_end->Reset(ADD, end_v);
+        new_begin->Reset(COPY, begin_v + truncate_length,
+                         match_r + truncate_length);
+      }
       break;
     case COPY:
       new_end = logic_tail;
+      if (new_begin < new_end) {
+        new_begin->Reset(COPY, begin_v + truncate_length,
+                         match_r + truncate_length);
+      }
       break;
     default:
+      throw "[InMemoryOutput::GeneralCorrect] Invalid type for logic_tail.";
       break;
-  }
-  
-  if (new_begin >= new_end) {
-    return; // when there is no room for new instruction
-  }
-  
-  new_begin->Reset(COPY, begin_v + truncate_length,
-                      match_r + truncate_length);
-  if (logic_tail->type() == ADD) {
-    logic_tail->SetInvalid();
-    new_end->Reset(ADD, end_v);
   }
 }
 
