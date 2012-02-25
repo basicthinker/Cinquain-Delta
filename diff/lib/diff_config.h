@@ -26,6 +26,6 @@
 #define CINQUAIN_DELTA_DIFF_CONFIG_H_
 
 const int kInitNumInstructions = 64;
-const int kSeedLength = 2;
+const int kSeedLength = 64;
 
 #endif // CINQUAIN_DELTA_DIFF_CONFIG_H_

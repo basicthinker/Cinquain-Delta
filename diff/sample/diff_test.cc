@@ -25,16 +25,18 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 
 #include "diff_config.h"
 #include "ajti_diff.h"
 #include "delta_decoder.h"
 
+// #define DEBUG_DIFF
 
 int main (int argc, const char * argv[])
 {
   if (argc < 3) {
-    printf("\nUsage: ./delta ReferenceFileName VersionFileName\n\n");
+    fprintf(stderr, "\nUsage: %s ReferenceFileName VersionFileName\n\n", argv[0]);
     return -1;
   }
   
@@ -44,7 +46,7 @@ int main (int argc, const char * argv[])
   if (file_r == -1 || file_v == -1) {
     close(file_r);
     close(file_v);
-    printf("Error: failed to open specified files.\n");
+    fprintf(stderr, "Error: failed to open specified files.\n");
     return -1;
   }
   
@@ -54,9 +56,13 @@ int main (int argc, const char * argv[])
   if (fstat(file_r, &file_stat_r) == -1 || fstat(file_v, &file_stat_v) == -1) {
     close(file_r);
     close(file_v);
-    printf("Error: failed to get file sizes.\n");
+    fprintf(stderr, "Error: failed to get file sizes.\n");
     return -1;
   }
+  
+  // Timing begins.
+  struct timeval start_time;
+  gettimeofday(&start_time, NULL);
   
   char *memory_r = (char *)mmap(NULL, file_stat_r.st_size,
                                             PROT_READ, MAP_PRIVATE, file_r, 0);
@@ -68,7 +74,7 @@ int main (int argc, const char * argv[])
     munmap(memory_v, file_stat_v.st_size);
     close(file_r);
     close(file_v);
-    printf("Error: failed to map files to memory.\n");
+    fprintf(stderr, "Error: failed to map files to memory.\n");
     return -1;
   }
   
@@ -77,47 +83,49 @@ int main (int argc, const char * argv[])
   InMemoryOutput output(memory_r, memory_v, kInitNumInstructions, memory_d);
   encoder.Encode((Byte *)memory_r, (offset_t)file_stat_r.st_size,
                  (Byte *)memory_v, (offset_t)file_stat_v.st_size, output);
-
-  // Print delta file
-  printf("Delta File (%d):\n", output.GetDeltaSize());
-  offset_t *offset_ptr = (offset_t *)memory_d;
-  printf("end_instruction = %d\n", *offset_ptr);
-  DeltaInstruction *instruction_ptr = (DeltaInstruction *)(memory_d + sizeof(offset_t));
-  while ((char *)instruction_ptr - memory_d <= *offset_ptr) {
-    switch (instruction_ptr->type()) {
-      case ADD:
-        printf("[%d] ADD [%d]\n",
-               instruction_ptr->offset(), instruction_ptr->attribute());
-        break;
-      case COPY:
-        printf("[%d] COPY [%d]\n",
-               instruction_ptr->offset(), instruction_ptr->attribute());
-        break;
-      default:
-        printf("[%d]\n", instruction_ptr->offset());
-        break;
-    }
-    ++instruction_ptr;
-  }
+  
+  // Timing ends.
+  struct timeval end_time;
+  gettimeofday(&end_time, NULL);
+  double sec = end_time.tv_sec - start_time.tv_sec;
+  double usec = (double)end_time.tv_usec - (double)start_time.tv_usec;
+  fprintf(stdout, "%lld\t%d\t%lf",
+          file_stat_v.st_size, output.GetDeltaSize(), sec + usec/1000000);
   
   char *memory_check;
   CinquainDecoder decoder(memory_check);
   decoder.Decode(memory_r, memory_d);
   
-  // Print restored version file
-  printf("Restored Version (%d):\n", decoder.GetVersionSize());
-  for (char *symbol_ptr = memory_check;
-       symbol_ptr - memory_check < decoder.GetVersionSize(); ++symbol_ptr) {
-    printf("%c", *symbol_ptr);
+#ifdef DEBUG_DIFF
+  // Print delta file
+  fprintf(stdout, "Delta File (%d):\n", output.GetDeltaSize());
+  offset_t *offset_ptr = (offset_t *)memory_d;
+  fprintf(stdout, "end_instruction = %d\n", *offset_ptr);
+  DeltaInstruction *instruction_ptr = (DeltaInstruction *)(memory_d + sizeof(offset_t));
+  while ((char *)instruction_ptr - memory_d <= *offset_ptr) {
+    switch (instruction_ptr->type()) {
+      case ADD:
+        fprintf(stdout, "[%d] ADD [%d]\n",
+               instruction_ptr->offset(), instruction_ptr->attribute());
+        break;
+      case COPY:
+        fprintf(stdout, "[%d] COPY [%d]\n",
+               instruction_ptr->offset(), instruction_ptr->attribute());
+        break;
+      default:
+        fprintf(stdout, "[%d]\n", instruction_ptr->offset());
+        break;
+    }
+    ++instruction_ptr;
   }
-  printf("\n");
+#endif
   
   if (file_stat_v.st_size != decoder.GetVersionSize()) {
-    printf("Wrong: version file sizes do not match.\n");
+    fprintf(stderr, "Wrong: version file sizes do not match.\n");
   } else if (memcmp(memory_v, memory_check, decoder.GetVersionSize()) != 0) {
-    printf("Wrong: restored version file is not identical to the original.\n");
+    fprintf(stderr, "Wrong: restored version file is not identical to the original.\n");
   } else {
-    printf("Encoding/Decoding: OK.\n");
+    fprintf(stdout, "\tOK\n");
   }
 
   munmap(memory_r, file_stat_r.st_size);
