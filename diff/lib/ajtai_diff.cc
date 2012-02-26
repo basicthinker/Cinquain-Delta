@@ -16,13 +16,13 @@
  */
 
 //
-//  ajti_diff.cc
+//  ajtai_diff.cc
 //  Cinquain-Delta
 //
 //  Created by Jinglei Ren <jinglei.ren@gmail.com> on 2/4/12.
 //
 
-#include "ajti_diff.h"
+#include "ajtai_diff.h"
 #include <memory.h>
 #include <algorithm>
 
@@ -35,9 +35,9 @@ CinquainEncoder::CinquainEncoder(int hashtable_length, int seed_length)
   hashtable_v_ = new IntHashtable<offset_t>(kPrime - 1);
   window_r_ = new NumericalWindow(seed_length_);
   window_v_ = new NumericalWindow(seed_length_);
-  current_r_ = 0L;
-  current_v_ = 0L;
-  suffix_v_ = 0L;
+  current_r_ = 0;
+  current_v_ = 0;
+  suffix_v_ = 0;
 }
 
 CinquainEncoder::~CinquainEncoder() {
@@ -52,9 +52,9 @@ void CinquainEncoder::Reset() {
   hashtable_v_->Reset();
   window_r_->Reset();
   window_v_->Reset();
-  current_r_ = 0L;
-  current_v_ = 0L;
-  suffix_v_ = 0L;
+  current_r_ = 0;
+  current_v_ = 0;
+  suffix_v_ = 0;
 }
 
 void CinquainEncoder::Encode(Byte *string_r, const offset_t length_r, 
@@ -74,39 +74,35 @@ void CinquainEncoder::Encode(Byte *string_r, const offset_t length_r,
   while ((current_v_ + seed_length_ <= length_v) 
          || (current_r_ + seed_length_ <= length_r)) { // (3)
     
-    if (current_v_ + seed_length_ <= length_v) {
-      fingerprint_v = to_clear_window_v ?
-                      window_v_->Reset(string_v + current_v_)
-                    : window_v_->Slide(string_v[current_v_ + seed_length_]);
-    }
-    
+    bool has_match = false;
     if (current_r_ + seed_length_ <= length_r) {
       fingerprint_r = to_clear_window_r ?
                       window_r_->Reset(string_r + current_r_)
-                    : window_r_->Slide(string_r[current_r_ + seed_length_]);
-    }
-    
-    hashtable_v_->SetValue(fingerprint_v, current_v_); // (4.a)
-    hashtable_r_->SetValue(fingerprint_r, current_r_); // (4.a)
-    
-    // Step (4.b)
-    bool has_match = false;
-    if (hashtable_v_->HasValue(fingerprint_r)) {
-      match_r = current_r_;
-      match_v = hashtable_v_->GetValue(fingerprint_r);
-      if (memcmp(string_r + match_r, string_v + match_v,
-             seed_length_ * sizeof(Byte)) == 0) {
-        has_match = true;
+                    : window_r_->Slide(string_r[current_r_ + seed_length_ - 1]);
+      hashtable_r_->SetValue(fingerprint_r, current_r_); // (4.a)
+      if (hashtable_v_->HasValue(fingerprint_r)) { // (4.b)
+        match_r = current_r_;
+        match_v = hashtable_v_->GetValue(fingerprint_r);
+        if (memcmp(string_r + match_r, string_v + match_v,
+                   seed_length_ * sizeof(Byte)) == 0) {
+          has_match = true;
+        }
       }
     }
     
-    if (!has_match && hashtable_r_->HasValue(fingerprint_v)) {
-      match_r = hashtable_r_->GetValue(fingerprint_v);
-      match_v = current_v_;
-      if (memcmp(string_r + match_r, string_v + match_v,
-                 seed_length_ * sizeof(Byte)) == 0) {
-        has_match = true;
-      } 
+    if (current_v_ + seed_length_ <= length_v) {
+      fingerprint_v = to_clear_window_v ?
+                      window_v_->Reset(string_v + current_v_)
+                    : window_v_->Slide(string_v[current_v_ + seed_length_ - 1]);
+      hashtable_v_->SetValue(fingerprint_v, current_v_); // (4.a)
+      if (!has_match && hashtable_r_->HasValue(fingerprint_v)) { // (4.b)
+        match_r = hashtable_r_->GetValue(fingerprint_v);
+        match_v = current_v_;
+        if (memcmp(string_r + match_r, string_v + match_v,
+                   seed_length_ * sizeof(Byte)) == 0) {
+          has_match = true;
+        } 
+      }
     }
     
     if (!has_match) {

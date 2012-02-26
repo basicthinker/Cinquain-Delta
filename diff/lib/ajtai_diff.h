@@ -16,7 +16,7 @@
  */
 
 //
-//  ajti_diff.h
+//  ajtai_diff.h
 //  Cinquain-Delta
 //
 //  Created by Jinglei Ren <jinglei.ren@gmail.com> on 2/4/12.

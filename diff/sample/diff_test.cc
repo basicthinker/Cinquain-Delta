@@ -28,20 +28,21 @@
 #include <sys/time.h>
 
 #include "diff_config.h"
-#include "ajti_diff.h"
+#include "ajtai_diff.h"
 #include "delta_decoder.h"
 
 // #define DEBUG_DIFF
 
 int main (int argc, const char * argv[])
 {
-  if (argc < 3) {
-    fprintf(stderr, "\nUsage: %s ReferenceFileName VersionFileName\n\n", argv[0]);
+  if (argc < 4) {
+    fprintf(stderr, "\nUsage: %s SeedLength ReferenceFileName VersionFileName\n\n", argv[0]);
     return -1;
   }
   
-  const int file_r = open(argv[1], O_RDONLY);
-  const int file_v = open(argv[2], O_RDONLY);
+  const int seed_length = atoi(argv[1]);
+  const int file_r = open(argv[2], O_RDONLY);
+  const int file_v = open(argv[3], O_RDONLY);
   
   if (file_r == -1 || file_v == -1) {
     close(file_r);
@@ -78,7 +79,7 @@ int main (int argc, const char * argv[])
     return -1;
   }
   
-  CinquainEncoder encoder(kPrime, kSeedLength);
+  CinquainEncoder encoder(kPrime, seed_length);
   char *memory_d;
   InMemoryOutput output(memory_r, memory_v, kInitNumInstructions, memory_d);
   encoder.Encode((Byte *)memory_r, (offset_t)file_stat_r.st_size,
@@ -96,6 +97,14 @@ int main (int argc, const char * argv[])
   CinquainDecoder decoder(memory_check);
   decoder.Decode(memory_r, memory_d);
   
+  if (file_stat_v.st_size != decoder.GetVersionSize()) {
+    fprintf(stderr, "Wrong: version file sizes do not match.\n");
+  } else if (memcmp(memory_v, memory_check, decoder.GetVersionSize()) != 0) {
+    fprintf(stderr, "Wrong: restored version file is not identical to the original.\n");
+  } else {
+    fprintf(stdout, "\tOK\n");
+  }
+
 #ifdef DEBUG_DIFF
   // Print delta file
   fprintf(stdout, "Delta File (%d):\n", output.GetDeltaSize());
@@ -106,11 +115,11 @@ int main (int argc, const char * argv[])
     switch (instruction_ptr->type()) {
       case ADD:
         fprintf(stdout, "[%d] ADD [%d]\n",
-               instruction_ptr->offset(), instruction_ptr->attribute());
+                instruction_ptr->offset(), instruction_ptr->attribute());
         break;
       case COPY:
         fprintf(stdout, "[%d] COPY [%d]\n",
-               instruction_ptr->offset(), instruction_ptr->attribute());
+                instruction_ptr->offset(), instruction_ptr->attribute());
         break;
       default:
         fprintf(stdout, "[%d]\n", instruction_ptr->offset());
@@ -120,14 +129,6 @@ int main (int argc, const char * argv[])
   }
 #endif
   
-  if (file_stat_v.st_size != decoder.GetVersionSize()) {
-    fprintf(stderr, "Wrong: version file sizes do not match.\n");
-  } else if (memcmp(memory_v, memory_check, decoder.GetVersionSize()) != 0) {
-    fprintf(stderr, "Wrong: restored version file is not identical to the original.\n");
-  } else {
-    fprintf(stdout, "\tOK\n");
-  }
-
   munmap(memory_r, file_stat_r.st_size);
   munmap(memory_v, file_stat_v.st_size);
   close(file_r);
