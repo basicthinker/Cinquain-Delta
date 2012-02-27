@@ -26,60 +26,60 @@
 
 void InMemoryOutput::Flush() {
   if (output_) delete[] output_;
+
+  InstructionIterator current_iter;
+  InstructionIterator next_iter;
+  const InstructionIterator end_iter = instructions_.end() - 1;
   
-  const DeltaInstruction *header_begin = (DeltaInstruction *)
-      new char[sizeof(DeltaInstruction) * instructions_.size()];
-  // Write header to buffer
-  DeltaInstruction *header_ptr = (DeltaInstruction *)header_begin;
-  for (InstructionIterator instruction_iter = instructions_.begin();
-       instruction_iter != instructions_.end(); ++instruction_iter) {
-    if (instruction_iter->IsValid()) {
-      *header_ptr = *instruction_iter;
-      ++header_ptr;
+  // Calculate section sizes
+  offset_t instruction_size = 0;
+  offset_t data_size = 0;
+  offset_t length;
+  current_iter = instructions_.begin();  
+  while (current_iter < end_iter) {
+    next_iter = current_iter + 1;
+    while (!next_iter->IsValid()) {
+      ++next_iter;
     }
-  }
-  const DeltaInstruction *header_end = header_ptr - 1; // END
-  const offset_t instruction_length = offset_t(sizeof(DeltaInstruction) * 
-                                               (header_end - header_begin));
-  
-  // Calculate version data length
-  offset_t data_length = 0;
-  offset_t version_size = 0;
-  for (header_ptr = (DeltaInstruction *)header_begin;
-       header_ptr < header_end; ++header_ptr) {
-    if (header_ptr->type() == ADD) {
-      header_ptr->set_attribute(data_length);
-      data_length += (header_ptr + 1)->offset() - header_ptr->offset();
+    length = next_iter->offset() - current_iter->offset();
+    if (current_iter->type() == ADD) {
+      current_iter->set_attribute(data_size);
+      data_size += length;
     }
-    version_size += (header_ptr + 1)->offset() - header_ptr->offset();
+    instruction_size += current_iter->size();
+    
+    current_iter = next_iter;
   }
+  const offset_t version_size = current_iter->offset();
   
-  delta_size_ = offset_t(sizeof(offset_t) + instruction_length + 
-      sizeof(offset_t) + data_length);
+  // Write header and data
+  delta_size_ = offset_t(sizeof(offset_t) + instruction_size + 
+      sizeof(offset_t) + data_size);
   output_ = new char[delta_size_];
-  char *output_ptr = output_;
   
-  // Instruction Section
-  *((offset_t *)output_ptr) = instruction_length + sizeof(offset_t);
-  output_ptr += sizeof(offset_t);
+  char *header_ptr = output_;
+  *((offset_t *)header_ptr) = sizeof(offset_t) + instruction_size;
+  header_ptr += sizeof(offset_t);
   
-  memcpy(output_ptr, header_begin, instruction_length);
-  output_ptr += instruction_length;
+  char *data_ptr = output_ + sizeof(offset_t) + instruction_size;
+  *((offset_t *)data_ptr) = version_size;
+  data_ptr += sizeof(offset_t);
   
-  // Data Section
-  *((offset_t *)output_ptr) = version_size;
-  output_ptr += sizeof(offset_t);
-  
-  offset_t memcpy_length;
-  for (header_ptr = (DeltaInstruction *)header_begin;
-       header_ptr < header_end; ++header_ptr) {
-    if (header_ptr->type() == ADD) {
-      memcpy_length = (header_ptr + 1)->offset() - header_ptr->offset();
-      memcpy(output_ptr, string_v_ + header_ptr->offset(), memcpy_length);
-      output_ptr += memcpy_length;
+  current_iter = instructions_.begin();
+  while (current_iter < end_iter) {
+    next_iter = current_iter + 1;
+    while (!next_iter->IsValid()) {
+      ++next_iter;
     }
+    length = next_iter->offset() - current_iter->offset();
+    if (current_iter->type() == ADD) {
+      memcpy(data_ptr + current_iter->attribute(),
+             string_v_ + current_iter->offset(),
+             length);
+    }
+    header_ptr += current_iter->Write(header_ptr);
+    
+    current_iter = next_iter;
   }
-  
-  delete[] header_begin;
 }
 

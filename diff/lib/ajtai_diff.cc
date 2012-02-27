@@ -33,8 +33,8 @@ CinquainEncoder::CinquainEncoder(int hashtable_length, int seed_length)
     : seed_length_(seed_length) {
   hashtable_r_ = new IntHashtable<offset_t>(kPrime - 1);
   hashtable_v_ = new IntHashtable<offset_t>(kPrime - 1);
-  window_r_ = new NumericalWindow(seed_length_);
-  window_v_ = new NumericalWindow(seed_length_);
+  window_r_ = new RabinWindow(seed_length_);
+  window_v_ = new RabinWindow(seed_length_);
   current_r_ = 0;
   current_v_ = 0;
   suffix_v_ = 0;
@@ -78,7 +78,7 @@ void CinquainEncoder::Encode(Byte *string_r, const offset_t length_r,
     if (current_r_ + seed_length_ <= length_r) {
       fingerprint_r = to_clear_window_r ?
                       window_r_->Reset(string_r + current_r_)
-                    : window_r_->Slide(string_r[current_r_ + seed_length_ - 1]);
+                    : window_r_->Slide(string_r + current_r_ - 1);
       hashtable_r_->SetValue(fingerprint_r, current_r_); // (4.a)
       if (hashtable_v_->HasValue(fingerprint_r)) { // (4.b)
         match_r = current_r_;
@@ -93,7 +93,7 @@ void CinquainEncoder::Encode(Byte *string_r, const offset_t length_r,
     if (current_v_ + seed_length_ <= length_v) {
       fingerprint_v = to_clear_window_v ?
                       window_v_->Reset(string_v + current_v_)
-                    : window_v_->Slide(string_v[current_v_ + seed_length_ - 1]);
+                    : window_v_->Slide(string_v + current_v_ - 1);
       hashtable_v_->SetValue(fingerprint_v, current_v_); // (4.a)
       if (!has_match && hashtable_r_->HasValue(fingerprint_v)) { // (4.b)
         match_r = hashtable_r_->GetValue(fingerprint_v);

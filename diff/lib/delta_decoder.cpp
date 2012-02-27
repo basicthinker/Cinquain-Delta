@@ -34,29 +34,49 @@ void CinquainDecoder::Decode(const char *reference, const char *delta) {
   }
   output_ = new char[version_size_];
   
-  DeltaInstruction *header_ptr = (DeltaInstruction *)(delta + sizeof(offset_t));
-  const DeltaInstruction *header_end =
-      (DeltaInstruction *)(delta + end_instruction);
-      // version_file_size as the offset of end instruction
+  char *header_ptr = (char *)delta + sizeof(offset_t);
+  const char *header_end = delta + end_instruction;
   
-  offset_t length;
   char *delta_ptr = output_;
+  offset_t length;
+  DeltaInstruction instruction[2]; // restore current & next instructions
+  bool current = 0;
+  bool next = 1;
+  header_ptr += instruction[current].Read(header_ptr);
   while (header_ptr < header_end) {
-    switch (header_ptr->type()) {
+    header_ptr += instruction[next].Read(header_ptr);
+    length = instruction[next].offset() - instruction[current].offset();
+    switch (instruction[current].type()) {
       case COPY:
-        length = (header_ptr + 1)->offset() - header_ptr->offset();
-        memcpy(delta_ptr, reference + header_ptr->attribute(), length);
+        memcpy(delta_ptr,
+               reference + instruction[current].attribute(), length);
         delta_ptr += length;
         break;
       case ADD:
-        length = (header_ptr + 1)->offset() - header_ptr->offset();
-        memcpy(delta_ptr, data_section + header_ptr->attribute(), length);
+        memcpy(delta_ptr,
+               data_section + instruction[current].attribute(), length);
         delta_ptr += length;
         break;
       default:
         throw "[CinquainDecoder::Decode] Invalid type for header_ptr.";
         break;
     }
-    ++header_ptr;
+    current = next;
+    next = !next;
+  }
+  // Write the last instruction
+  length = version_size_ - instruction[current].offset();
+  switch (instruction[current].type()) {
+    case COPY:
+      memcpy(delta_ptr,
+             reference + instruction[current].attribute(), length);
+      break;
+    case ADD:
+      memcpy(delta_ptr,
+             data_section + instruction[current].attribute(), length);
+      break;
+    default:
+      throw "[CinquainDecoder::Decode] Invalid type for header_ptr.";
+      break;
   }
 }

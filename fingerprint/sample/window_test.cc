@@ -45,10 +45,10 @@ static void TestSlide(ostream &out) {
   
   Byte *input_string = new Byte[length];
   FillString(length, input_string);
-  RabinWindow *window = new NumericalWindow(kWidth, input_string); // Test constructor.
+  RabinWindow *window = new RabinWindow(kWidth, input_string); // Test constructor.
   
-  for (int i = kWidth; i < length; ++i) {
-    window->Slide(input_string[i]);
+  for (int i = 0; i < length - kWidth; ++i) {
+    window->Slide(input_string + i);
   }
   PrintString(out, kWidth, input_string + length - kWidth);
   out << "\t" << window->GetFingerprint() << endl;
@@ -56,8 +56,8 @@ static void TestSlide(ostream &out) {
   for (int i = 0; i < num_cases - 1; ++i) {
     FillString(length, input_string);
     window->Reset(input_string); // Test Reset(Byte *) function
-    for (int j = kWidth; j < length; ++j) {
-      window->Slide(input_string[j]);
+    for (int j = 0; j < length - kWidth; ++j) {
+      window->Slide(input_string + j);
     }
     PrintString(out, kWidth, input_string + length - kWidth);
     out << "\t" << window->GetFingerprint() << endl;
@@ -75,7 +75,7 @@ static void TestExtend(ostream &out) {
   
   Byte *input_string = new Byte[length];
   FillString(length, input_string);
-  RabinWindow *window = new NumericalWindow(kWidth, input_string); // Test constructor.
+  RabinWindow *window = new RabinWindow(kWidth, input_string); // Test constructor.
   
   for (int i = kWidth; i < length; ++i) {
     window->Extend(input_string[i]);
@@ -111,11 +111,11 @@ static void TestCollision(ostream &out) {
   Byte *input_string = new Byte[num_cases + kWidth - 1];
   FillString(length, input_string);
   
-  RabinWindow *window = new NumericalWindow(kWidth, input_string);
+  RabinWindow *window = new RabinWindow(kWidth, input_string);
   ++hash_counts[window->GetFingerprint()];
   
-  for (int i = kWidth; i < length; ++i) {
-    window->Slide(input_string[i]);
+  for (int i = 0; i < length - kWidth; ++i) {
+    window->Slide(input_string + i);
     ++hash_counts[window->GetFingerprint()];
   }
   
@@ -148,12 +148,12 @@ static void TestCollision(ostream &out) {
   delete input_string;
 }
 
-int main(int argc, const char * argv[]) {  
+int main(int argc, const char * argv[]) {
   ofstream output_file;
   output_file.open("fingerprints.log");
   
   output_file << hex;
-  output_file << NumericalWindow::SymbolShift(1) 
+  output_file << RabinWindow::SymbolShift(1) 
     << " as the radix of symbol" << endl;
   output_file << kPrime << " as the prime" << endl;
   

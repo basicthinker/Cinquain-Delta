@@ -62,10 +62,9 @@ using std::upper_bound;
 
 typedef vector<DeltaInstruction>::iterator InstructionIterator;
 
-class DiffOutputInterface;
 class InMemoryOutput;
 
-typedef DiffOutputInterface DiffOutput; // one of the above classes
+typedef InMemoryOutput DiffOutput; // one of the above classes
 
 
 class DiffOutputInterface {

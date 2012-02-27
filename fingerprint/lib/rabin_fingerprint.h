@@ -28,27 +28,34 @@
 #include "rabin_config.h"
 #include <memory.h>
 
+class NumericalWindow;
+
+typedef NumericalWindow RabinWindow; // one of the above
+
 #ifdef DEBUG_FINGERPRINT
 #include <iostream>
 using std::cerr;
 using std::endl;
 #endif
 
-class RabinWindow {
+class RabinWindowInterface {
   public:
     virtual Int Extend(Byte next_symbol) = 0;
-    virtual Int Slide(Byte next_symbol) = 0;
+    // Slides one step from the provided position
+    virtual Int Slide(Byte *string) = 0;
     virtual Int GetFingerprint() = 0;
     virtual Int Reset(Byte* string = 0) = 0;
-    virtual ~RabinWindow() {};
+    virtual ~RabinWindowInterface() {};
 };
 
-class NumericalWindow : public RabinWindow {
+/* Implementing class(es) */
+
+class NumericalWindow : public RabinWindowInterface {
   public:
     explicit NumericalWindow(int width, Byte *string = 0);
 
     Int Extend(Byte next_symbol);
-    Int Slide(Byte next_symbol);
+    Int Slide(Byte *string);
     Int GetFingerprint();
 
     Int Reset(Byte* string = 0);
@@ -68,7 +75,6 @@ class NumericalWindow : public RabinWindow {
     Int over_weight_;
     Int fingerprint_;
 };
-
 
 inline void NumericalWindow::InitFingerprint(Byte *string) {
   fingerprint_ = 0;
@@ -100,7 +106,8 @@ inline Int NumericalWindow::Extend(Byte next_symbol) {
   return fingerprint_;
 }
 
-inline Int NumericalWindow::Slide(Byte next_symbol) {
+inline Int NumericalWindow::Slide(Byte *string) {
+  Byte next_symbol = *(string + width_);
   ++window_head_;
   window_head_ %= width_;
   fingerprint_ += kPrime; // Prevent negative integers

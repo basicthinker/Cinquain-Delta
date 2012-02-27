@@ -56,6 +56,10 @@ public:
   bool IsValid();
   void SetInvalid();
   
+  offset_t size();
+  offset_t Read(char *string);
+  offset_t Write(char *string);
+  
   friend bool operator<(const int value, const DeltaInstruction &instruction);
   
 private:
@@ -66,13 +70,11 @@ private:
 
 inline DeltaInstruction::DeltaInstruction()
     : offset_(0), attribute_(0), type_(INVALID){
-  
 }
 
 inline DeltaInstruction::DeltaInstruction(InstructionType type,
                                         offset_t offset, offset_t attribute)
     : offset_(offset), attribute_(attribute), type_(type){
-
 }
 
 inline void DeltaInstruction::Reset(InstructionType type,
@@ -112,6 +114,20 @@ inline offset_t DeltaInstruction::attribute() const {
 
 inline void DeltaInstruction::set_attribute(const offset_t attribute) {
   attribute_ = attribute;
+}
+
+inline offset_t DeltaInstruction::Read(char *string) {
+  *this = *((DeltaInstruction *)string);
+  return sizeof(DeltaInstruction);
+}
+
+inline offset_t DeltaInstruction::Write(char *string) {
+  *((DeltaInstruction *)string) = *this;
+  return sizeof(DeltaInstruction);
+}
+
+inline offset_t DeltaInstruction::size() {
+  return sizeof(DeltaInstruction);
 }
 
 inline bool operator<(const int value, const DeltaInstruction &instruction) {
