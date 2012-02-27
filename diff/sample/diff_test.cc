@@ -59,6 +59,10 @@ int main (int argc, const char * argv[])
     close(file_v);
     fprintf(stderr, "Error: failed to get file sizes.\n");
     return -1;
+  } else if (file_stat_r.st_size == 0 || file_stat_v.st_size == 0) {
+    close(file_r);
+    close(file_v);
+    return 0;
   }
   
   // Timing begins.
@@ -104,7 +108,7 @@ int main (int argc, const char * argv[])
   } else {
     fprintf(stdout, "\tOK\n");
   }
-
+  
 #ifdef DEBUG_DIFF
   // Print delta file
   fprintf(stdout, "Delta File (%d):\n", output.GetDeltaSize());

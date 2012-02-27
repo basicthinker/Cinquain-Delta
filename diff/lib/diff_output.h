@@ -136,11 +136,15 @@ inline void InMemoryOutput::Append(InstructionType instruction,
 
 inline void InMemoryOutput::TailCorrect(const offset_t begin_v,
                                         const offset_t match_r) {
-  while (instructions_.back().offset() >= begin_v) {
-    instructions_.pop_back();
-  }
-  while (instructions_.back().type() == INVALID) {
-    instructions_.pop_back(); // Does not violate the invariant.
+  if (begin_v == 0) {
+    instructions_.clear();
+  } else {
+    while (instructions_.back().offset() >= begin_v) {
+      instructions_.pop_back();
+    }
+    while (instructions_.back().type() == INVALID) {
+      instructions_.pop_back(); // Does not violate the invariant.
+    }
   }
   Append(COPY, begin_v, match_r);
 }
