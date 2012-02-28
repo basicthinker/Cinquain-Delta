@@ -31,7 +31,7 @@
 #include "ajtai_diff.h"
 #include "delta_decoder.h"
 
-// #define DEBUG_DIFF
+#define CHECK // checks the delta after encoding
 
 int main (int argc, const char * argv[])
 {
@@ -96,7 +96,8 @@ int main (int argc, const char * argv[])
   double usec = (double)end_time.tv_usec - (double)start_time.tv_usec;
   fprintf(stdout, "%lld\t%d\t%lf",
           file_stat_v.st_size, output.GetDeltaSize(), sec + usec/1000000);
-  
+
+#ifdef CHECK
   char *memory_check;
   CinquainDecoder decoder(memory_check);
   decoder.Decode(memory_r, memory_d);
@@ -106,32 +107,10 @@ int main (int argc, const char * argv[])
   } else if (memcmp(memory_v, memory_check, decoder.GetVersionSize()) != 0) {
     fprintf(stderr, "Wrong: restored version file is not identical to the original.\n");
   } else {
-    fprintf(stdout, "\tOK\n");
-  }
-  
-#ifdef DEBUG_DIFF
-  // Print delta file
-  fprintf(stdout, "Delta File (%d):\n", output.GetDeltaSize());
-  offset_t *offset_ptr = (offset_t *)memory_d;
-  fprintf(stdout, "end_instruction = %d\n", *offset_ptr);
-  DeltaInstruction *instruction_ptr = (DeltaInstruction *)(memory_d + sizeof(offset_t));
-  while ((char *)instruction_ptr - memory_d <= *offset_ptr) {
-    switch (instruction_ptr->type()) {
-      case ADD:
-        fprintf(stdout, "[%d] ADD [%d]\n",
-                instruction_ptr->offset(), instruction_ptr->attribute());
-        break;
-      case COPY:
-        fprintf(stdout, "[%d] COPY [%d]\n",
-                instruction_ptr->offset(), instruction_ptr->attribute());
-        break;
-      default:
-        fprintf(stdout, "[%d]\n", instruction_ptr->offset());
-        break;
-    }
-    ++instruction_ptr;
+    fprintf(stdout, "\tOK");
   }
 #endif
+  fprintf(stdout, "\n");
   
   munmap(memory_r, file_stat_r.st_size);
   munmap(memory_v, file_stat_v.st_size);

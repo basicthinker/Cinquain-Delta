@@ -24,6 +24,10 @@
 
 #include "delta_decoder.h"
 
+#ifdef DEBUG_DELTA
+#include <stdio.h>
+#endif
+
 void CinquainDecoder::Decode(const char *reference, const char *delta) {
   const offset_t end_instruction = *((offset_t *)delta);
   version_size_ = *((offset_t *)(delta + end_instruction));
@@ -51,11 +55,21 @@ void CinquainDecoder::Decode(const char *reference, const char *delta) {
         memcpy(delta_ptr,
                reference + instruction[current].attribute(), length);
         delta_ptr += length;
+#ifdef DEBUG_DELTA
+        fprintf(stdout, "[%d] COPY [%d]\n",
+                instruction[current].offset(),
+                instruction[current].attribute());
+#endif
         break;
       case ADD:
         memcpy(delta_ptr,
                data_section + instruction[current].attribute(), length);
         delta_ptr += length;
+#ifdef DEBUG_DELTA
+        fprintf(stdout, "[%d] ADD [%d]\n",
+                instruction[current].offset(),
+                instruction[current].attribute());
+#endif
         break;
       default:
         throw "[CinquainDecoder::Decode] Invalid type for header_ptr.";
