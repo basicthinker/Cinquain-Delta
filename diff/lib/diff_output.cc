@@ -58,7 +58,7 @@ void InMemoryOutput::Flush() {
   output_ = new char[delta_size_];
   
   char *header_ptr = output_;
-  *((offset_t *)header_ptr) = sizeof(offset_t) + instruction_size;
+  *((offset_t *)header_ptr) = (offset_t)sizeof(offset_t) + instruction_size;
   header_ptr += sizeof(offset_t);
   
   char *data_ptr = output_ + sizeof(offset_t) + instruction_size;

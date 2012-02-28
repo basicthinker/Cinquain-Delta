@@ -29,6 +29,10 @@
 
 // #define DEBUG_DELTA
 
+#ifdef DEBUG_DELTA
+#include <stdio.h>
+#endif
+
 class RawInstruction;
 class CompactInstruction;
 
@@ -105,7 +109,7 @@ inline void ReadOffset(int width, char *string, offset_t &value) {
       break;
     case 3:
       value = *((uint16_t *)string);
-      value = value << 8 + *((uint8_t *)(string + 2));
+      value = (value << 8) + *((uint8_t *)(string + 2));
       break;
     case 4:
       value = *((uint32_t *)string);
@@ -271,13 +275,13 @@ private:
   // Serializes to one byte (currently)
   // the fields type_, offset_width_, and attribute_width_.
   // Only ADD or COPY instruction should be serialized.
-  inline offset_t EncodeType(char *type) {
+  inline offset_t EncodeType(char *string) {
     switch (type_) {
       case ADD:
-        *type = offset_width_ << 3 + attribute_width_;
+        *string = (offset_width_ << 3) + attribute_width_;
         break;
       case COPY:
-        *type = kTypeBase + offset_width_ << 3 + attribute_width_;
+        *string = kTypeBase + (offset_width_ << 3) + attribute_width_;
         break;
 #ifdef DEBUG_DELTA
       default:
@@ -289,10 +293,10 @@ private:
   
   // Sets the fields type_, offset_width_, and attribute_width_.
   // Only ADD or COPY instruction should be meet.
-  inline offset_t DecodeType(char *type) {
-    if (*type >= kTypeBase) {
+  inline offset_t DecodeType(char *string) {
+    if (*string >= kTypeBase) {
       type_ = COPY;
-    } else if (*type > 0) {
+    } else if (*string > 0) {
       type_ = ADD;
     }
 #ifdef DEBUG_DELTA
@@ -300,8 +304,8 @@ private:
       throw "[CompactInstruction::DecodeType] Invalid type to decode.";
     }
 #endif
-    offset_width_ = (type_ >> 3) & 0x07;
-    attribute_width_ = type_ & 0x07;
+    offset_width_ = (*string >> 3) & 0x07;
+    attribute_width_ = *string & 0x07;
     return 1; // sizeof(int8_t)
   }
 };
@@ -357,7 +361,7 @@ inline void CompactInstruction::SetInvalid() {
 }
 
 inline offset_t CompactInstruction::size() {
-  return offset_width_ + attribute_width_ + sizeof(type_);
+  return offset_width_ + attribute_width_ + 1; // sizeof(int8_t)
 }
 
 
