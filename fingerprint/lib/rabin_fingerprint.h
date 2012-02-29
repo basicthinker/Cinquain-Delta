@@ -29,8 +29,9 @@
 #include <memory.h>
 
 class NumericalWindow;
+class SimpleWindow;
 
-typedef NumericalWindow RabinWindow; // one of the above
+typedef SimpleWindow RabinWindow; // one of the above
 
 #ifdef DEBUG_FINGERPRINT
 #include <iostream>
@@ -38,15 +39,25 @@ using std::cerr;
 using std::endl;
 #endif
 
+Int SymbolShift(Int value);
+
 class RabinWindowInterface {
   public:
     virtual Int Extend(Byte next_symbol) = 0;
-    // Slides one step from the provided position
+  
+    // Slides one step TO the provided position.
+    // New window begines with the *string byte, with its fingerprint returned.
     virtual Int Slide(Byte *string) = 0;
+  
     virtual Int GetFingerprint() = 0;
     virtual Int Reset(Byte* string = 0) = 0;
     virtual ~RabinWindowInterface() {};
 };
+
+inline Int SymbolShift(Int value) {
+  return (value << kSymbolBitWidth); // non-normal radix can be used
+                                     // SimpleWindow only supports normal radix.
+}
 
 /* Implementing class(es) */
 
@@ -61,8 +72,6 @@ class NumericalWindow : public RabinWindowInterface {
     Int Reset(Byte* string = 0);
 
     ~NumericalWindow();
-  
-    static Int SymbolShift(Int value);
 
   private:
     void InitWeights();
@@ -81,8 +90,8 @@ inline void NumericalWindow::InitFingerprint(Byte *string) {
   Byte next_symbol;
   for (window_head_ = 0; window_head_ < width_; ++window_head_) {
     next_symbol = window_symbols_[window_head_] = string[window_head_];
-    fingerprint_ += (next_symbol * weights_[width_ - window_head_ - 1])
-    % kPrime;
+    fingerprint_ += (next_symbol * weights_[width_ - window_head_ - 1]) 
+      % kPrime;
   }
   window_head_ = width_ - 1;
   fingerprint_ %= kPrime;
@@ -90,10 +99,6 @@ inline void NumericalWindow::InitFingerprint(Byte *string) {
 #ifdef DEBUG_FINGERPRINT
   cerr << "Initialized fingerprint = " << fingerprint_ << endl;
 #endif
-}
-
-inline Int NumericalWindow::SymbolShift(Int value) {
-  return (value << kSymbolBitWidth) + value;
 }
 
 inline Int NumericalWindow::Extend(Byte next_symbol) {
@@ -107,10 +112,10 @@ inline Int NumericalWindow::Extend(Byte next_symbol) {
 }
 
 inline Int NumericalWindow::Slide(Byte *string) {
-  Byte next_symbol = *(string + width_);
+  Byte next_symbol = *(string + width_ - 1);
   ++window_head_;
   window_head_ %= width_;
-  fingerprint_ += kPrime; // Prevent negative integers
+  fingerprint_ += kPrime; // prevents negative integers
                           // in the following operations
   fingerprint_ = (SymbolShift(fingerprint_) + next_symbol
                   - window_symbols_[window_head_] * over_weight_) % kPrime;
@@ -132,10 +137,61 @@ inline Int NumericalWindow::Reset(Byte* string) {
   fingerprint_ = 0;
   if (string) {
     InitFingerprint(string);
+    return fingerprint_;
   } else {
     memset(window_symbols_, 0, width_ * sizeof(Byte));
+    return kPrime;
   }
-  return fingerprint_;
+}
+
+// Fast implementation of window semantics by integer module
+class SimpleWindow : public RabinWindowInterface {
+  public:
+    explicit SimpleWindow(int width, Byte *string = 0);
+    Int Extend(Byte next_symbol);
+    Int Slide(Byte *string);
+    Int GetFingerprint();
+    Int Reset(Byte* string = 0);
+
+  private:
+    uint64_t fingerprint_;
+  
+};
+
+inline SimpleWindow::SimpleWindow(int width, Byte *string) {
+  if (width != 8) {
+    throw "[SimpleWindow::SimpleWindow] Invalid width (!= 8 bytes).";
+  }
+  if (string) {
+    Slide(string);
+  }
+}
+
+inline Int SimpleWindow::Extend(Byte next_symbol) {
+  fingerprint_ = ((fingerprint_ << kSymbolBitWidth) + next_symbol) % kPrime;
+  return (Int)fingerprint_;
+}
+
+inline Int SimpleWindow::Slide(Byte *string) {
+  fingerprint_ = *((uint64_t *)string) % kPrime;
+  
+#ifdef DEBUG_FINGERPRINT
+  cerr << std::hex << *((uint64_t *)string) << endl;
+#endif
+  
+  return (Int)fingerprint_;
+}
+
+inline Int SimpleWindow::GetFingerprint() {
+  return (Int)fingerprint_;
+}
+
+inline Int SimpleWindow::Reset(Byte *string) {
+  if (string) {
+    return Slide(string);
+  } else {
+    return kPrime; // dnotes success
+  }
 }
 
 #endif /* CINQUAIN_RABIN_FINGERPRINT_H_ */

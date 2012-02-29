@@ -24,6 +24,9 @@ import java.util.Scanner;
 /**
  * RabinFingerprintChecker checks Rabin fingerprints in an input file
  * by comparing them with those computed using BigInteger in a straight forward way.
+ * NOTE: the slide-in symbol should be LSB.
+ * SimpleWindow uses little-endian integer operations if it resides on x86 architecture,
+ * so in that case its results should NOT be checked by this class.
  * <p>
  * The input file should contain a two-line header followed by data lines
  * (all using hexadecimal values):
@@ -54,7 +57,7 @@ public class RabinFingerprintChecker {
 			FileReader reader = new FileReader(args[0]);
 			Scanner scanner = new Scanner(reader);
 			
-			// Parse the first two lines to retrieve bit-length of symbol and prime
+			// Parse the first two lines to retrieve symbol radix and prime
 			long symbolRadix = 0;
 			BigInteger prime = new BigInteger("0");
 			for (int lineNum = 1; lineNum <= 2; ++lineNum) {

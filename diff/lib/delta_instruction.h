@@ -135,38 +135,38 @@ enum InstructionType {
 // Raw format of instructions, using fixed length of fields
 // that are directly written to or read from byte strings.
 class RawInstruction {
-public:
-  RawInstruction() {};
-  RawInstruction(InstructionType type, offset_t offset,
+  public:
+    RawInstruction() {};
+    RawInstruction(InstructionType type, offset_t offset,
                    offset_t attribute = 0);
   
-  InstructionType type() const;
-  // END instruction should not be invoked this function on.
-  void set_type(InstructionType type);
+    InstructionType type() const;
+    // END instruction should not be invoked this function on.
+    void set_type(InstructionType type);
   
-  // Returns the offset on the version string
-  offset_t offset() const;
-  void set_offset(offset_t offset);
+    // Returns the offset on the version string
+    offset_t offset() const;
+    void set_offset(offset_t offset);
   
-  // Returns the length for ADD instruction or
-  // the offset on the reference string for COPY instruction.
-  offset_t attribute() const;
-  void set_attribute(offset_t attribute);
-  
-  void Reset(InstructionType type, offset_t offset, offset_t attribute = 0);
-  bool IsValid();
-  void SetInvalid();
-  
-  offset_t size();
-  offset_t Write(char *string);
-  offset_t Read(char *string);
-  
-  friend bool operator<(const int value, const RawInstruction &instruction);
-  
-private:
-  offset_t offset_; // placed first to get version_file_size in end instruction
-  InstructionType type_;
-  offset_t attribute_;
+    // Returns the length for ADD instruction or
+    // the offset on the reference string for COPY instruction.
+    offset_t attribute() const;
+    void set_attribute(offset_t attribute);
+    
+    void Reset(InstructionType type, offset_t offset, offset_t attribute = 0);
+    bool IsValid();
+    void SetInvalid();
+    
+    offset_t size();
+    offset_t Write(char *string);
+    offset_t Read(char *string);
+    
+    friend bool operator<(const int value, const RawInstruction &instruction);
+    
+  private:
+    offset_t offset_; // placed first to get version_file_size in end instruction
+    InstructionType type_;
+    offset_t attribute_;
 };
 
 inline RawInstruction::RawInstruction(InstructionType type,
@@ -234,80 +234,80 @@ inline bool operator<(const int value, const RawInstruction &instruction) {
 // Compact format of instructions, using variable length of fields
 // that are written to or read from byte strings according to their length.
 class CompactInstruction {
-public:
-  CompactInstruction() {};
-  CompactInstruction(InstructionType type, offset_t offset,
-                 offset_t attribute = 0);
-  
-  InstructionType type() const;
-  void set_type(InstructionType type);
-  
-  // Returns the offset on the version string
-  offset_t offset() const;
-  void set_offset(offset_t offset);
-  
-  // Returns the length for ADD instruction or
-  // the offset on the reference string for COPY instruction.
-  offset_t attribute() const;
-  void set_attribute(offset_t attribute);
-  
-  void Reset(InstructionType type, offset_t offset, offset_t attribute = 0);
-  bool IsValid();
-  void SetInvalid();
-  
-  offset_t size();
-  offset_t Write(char *string);
-  offset_t Read(char *string);
-  
-  friend bool operator<(const int value, const CompactInstruction &instruction);
-  
-private:
-  offset_t offset_;
-  offset_t attribute_;
-  
-  /* Developers' adaptable section */
-  uint8_t offset_width_; // value less than 7
-  uint8_t attribute_width_; // value less than 7 
-  int8_t type_; // extensible to denote wider offset values
-  
-  static const int8_t kTypeBase = 1 << 6;
-  
-  // Serializes to one byte (currently)
-  // the fields type_, offset_width_, and attribute_width_.
-  // Only ADD or COPY instruction should be serialized.
-  inline offset_t EncodeType(char *string) {
-    switch (type_) {
-      case ADD:
-        *string = (offset_width_ << 3) + attribute_width_;
-        break;
-      case COPY:
-        *string = kTypeBase + (offset_width_ << 3) + attribute_width_;
-        break;
-#ifdef DEBUG_DELTA
-      default:
-        throw "[CompactInstruction::EncodeType] Invalid type to encode.";
-#endif
+  public:
+    CompactInstruction() {};
+    CompactInstruction(InstructionType type, offset_t offset,
+                   offset_t attribute = 0);
+    
+    InstructionType type() const;
+    void set_type(InstructionType type);
+    
+    // Returns the offset on the version string
+    offset_t offset() const;
+    void set_offset(offset_t offset);
+    
+    // Returns the length for ADD instruction or
+    // the offset on the reference string for COPY instruction.
+    offset_t attribute() const;
+    void set_attribute(offset_t attribute);
+    
+    void Reset(InstructionType type, offset_t offset, offset_t attribute = 0);
+    bool IsValid();
+    void SetInvalid();
+    
+    offset_t size();
+    offset_t Write(char *string);
+    offset_t Read(char *string);
+    
+    friend bool operator<(const int value, const CompactInstruction &instruction);
+    
+  private:
+    offset_t offset_;
+    offset_t attribute_;
+    
+    /* Developers' adaptable section */
+    uint8_t offset_width_; // value less than 7
+    uint8_t attribute_width_; // value less than 7 
+    int8_t type_; // extensible to denote wider offset values
+    
+    static const int8_t kTypeBase = 1 << 6;
+    
+    // Serializes to one byte (currently)
+    // the fields type_, offset_width_, and attribute_width_.
+    // Only ADD or COPY instruction should be serialized.
+    inline offset_t EncodeType(char *string) {
+      switch (type_) {
+        case ADD:
+          *string = (offset_width_ << 3) + attribute_width_;
+          break;
+        case COPY:
+          *string = kTypeBase + (offset_width_ << 3) + attribute_width_;
+          break;
+    #ifdef DEBUG_DELTA
+        default:
+          throw "[CompactInstruction::EncodeType] Invalid type to encode.";
+    #endif
+      }
+      return 1; // sizeof(int8_t)
     }
-    return 1; // sizeof(int8_t)
-  }
-  
-  // Sets the fields type_, offset_width_, and attribute_width_.
-  // Only ADD or COPY instruction should be meet.
-  inline offset_t DecodeType(char *string) {
-    if (*string >= kTypeBase) {
-      type_ = COPY;
-    } else if (*string > 0) {
-      type_ = ADD;
+    
+    // Sets the fields type_, offset_width_, and attribute_width_.
+    // Only ADD or COPY instruction should be meet.
+    inline offset_t DecodeType(char *string) {
+      if (*string >= kTypeBase) {
+        type_ = COPY;
+      } else if (*string > 0) {
+        type_ = ADD;
+      }
+    #ifdef DEBUG_DELTA
+      else {
+        throw "[CompactInstruction::DecodeType] Invalid type to decode.";
+      }
+    #endif
+      offset_width_ = (*string >> 3) & 0x07;
+      attribute_width_ = *string & 0x07;
+      return 1; // sizeof(int8_t)
     }
-#ifdef DEBUG_DELTA
-    else {
-      throw "[CompactInstruction::DecodeType] Invalid type to decode.";
-    }
-#endif
-    offset_width_ = (*string >> 3) & 0x07;
-    attribute_width_ = *string & 0x07;
-    return 1; // sizeof(int8_t)
-  }
 };
 
 inline CompactInstruction::CompactInstruction(InstructionType type,

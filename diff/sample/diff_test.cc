@@ -83,7 +83,7 @@ int main (int argc, const char * argv[])
     return -1;
   }
   
-  CinquainEncoder encoder(kPrime, seed_length);
+  CinquainEncoder encoder(seed_length);
   char *memory_d;
   InMemoryOutput output(memory_r, memory_v, kInitNumInstructions, memory_d);
   encoder.Encode((Byte *)memory_r, (offset_t)file_stat_r.st_size,

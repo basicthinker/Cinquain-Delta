@@ -31,7 +31,7 @@
 
 class CinquainEncoder {
   public:
-    CinquainEncoder(int hashtable_length, int seed_length);
+    CinquainEncoder(int seed_length);
     void Encode(Byte *reference, const offset_t length_r,
                 Byte *version, const offset_t length_v,
                 DiffOutput &output);

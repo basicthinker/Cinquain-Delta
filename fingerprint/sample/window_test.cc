@@ -31,7 +31,7 @@
 using namespace std;
 
 // Global setting
-const int kWidth = 16;
+const int kWidth = 8; // required by SimpleWindow
 
 static void FillString(int length, Byte *string);
 static void PrintString(ostream &out, int length, Byte *string);
@@ -47,7 +47,7 @@ static void TestSlide(ostream &out) {
   FillString(length, input_string);
   RabinWindow *window = new RabinWindow(kWidth, input_string); // Test constructor.
   
-  for (int i = 0; i < length - kWidth; ++i) {
+  for (int i = 1; i <= length - kWidth; ++i) {
     window->Slide(input_string + i);
   }
   PrintString(out, kWidth, input_string + length - kWidth);
@@ -56,7 +56,7 @@ static void TestSlide(ostream &out) {
   for (int i = 0; i < num_cases - 1; ++i) {
     FillString(length, input_string);
     window->Reset(input_string); // Test Reset(Byte *) function
-    for (int j = 0; j < length - kWidth; ++j) {
+    for (int j = 1; j <= length - kWidth; ++j) {
       window->Slide(input_string + j);
     }
     PrintString(out, kWidth, input_string + length - kWidth);
@@ -114,7 +114,7 @@ static void TestCollision(ostream &out) {
   RabinWindow *window = new RabinWindow(kWidth, input_string);
   ++hash_counts[window->GetFingerprint()];
   
-  for (int i = 0; i < length - kWidth; ++i) {
+  for (int i = 1; i <= length - kWidth; ++i) {
     window->Slide(input_string + i);
     ++hash_counts[window->GetFingerprint()];
   }
@@ -153,7 +153,7 @@ int main(int argc, const char * argv[]) {
   output_file.open("fingerprints.log");
   
   output_file << hex;
-  output_file << RabinWindow::SymbolShift(1) 
+  output_file << SymbolShift(1) 
     << " as the radix of symbol" << endl;
   output_file << kPrime << " as the prime" << endl;
   

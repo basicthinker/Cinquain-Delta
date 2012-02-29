@@ -25,9 +25,11 @@
 #ifndef CINQUAIN_RABIN_CONFIG_H_
 #define CINQUAIN_RABIN_CONFIG_H_
 
-typedef int Int;
+#include <stdint.h>
 
-typedef unsigned char Byte;
+typedef uint32_t Int;
+
+typedef uint8_t Byte;
 
 const Int kPrime = 7993;
 const Int kSymbolBitWidth = sizeof(Byte) << 3;
