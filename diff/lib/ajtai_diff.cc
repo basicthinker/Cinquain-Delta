@@ -83,8 +83,8 @@ void CinquainEncoder::Encode(Byte *string_r, const offset_t length_r,
       if (hashtable_v_->HasValue(fingerprint_r)) { // (4.b)
         match_r = current_r_;
         match_v = hashtable_v_->GetValue(fingerprint_r);
-        if (memcmp(string_r + match_r, string_v + match_v,
-                   seed_length_ * sizeof(Byte)) == 0) {
+        if (!window_r_->CheckCollision(string_r + match_r,
+                                       string_v + match_v)) {
           has_match = true;
         }
       }
@@ -98,8 +98,8 @@ void CinquainEncoder::Encode(Byte *string_r, const offset_t length_r,
       if (!has_match && hashtable_r_->HasValue(fingerprint_v)) { // (4.b)
         match_r = hashtable_r_->GetValue(fingerprint_v);
         match_v = current_v_;
-        if (memcmp(string_r + match_r, string_v + match_v,
-                   seed_length_ * sizeof(Byte)) == 0) {
+        if (!window_r_->CheckCollision(string_r + match_r,
+                                       string_v + match_v)) {
           has_match = true;
         } 
       }

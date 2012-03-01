@@ -51,6 +51,7 @@ class RabinWindowInterface {
   
     virtual Int GetFingerprint() = 0;
     virtual Int Reset(Byte* string = 0) = 0;
+    virtual bool CheckCollision(const Byte *a, const Byte *b) = 0;
     virtual ~RabinWindowInterface() {};
 };
 
@@ -72,12 +73,14 @@ class NumericalWindow : public RabinWindowInterface {
     Int Reset(Byte* string = 0);
 
     ~NumericalWindow();
+  
+    bool CheckCollision(const Byte *a, const Byte *b);
 
   private:
     void InitWeights();
     void InitFingerprint(Byte *string);
 
-    const int width_;
+    const int width_; // number of Bytes
     Byte *window_symbols_;
     int window_head_;
     Int *weights_;
@@ -144,6 +147,10 @@ inline Int NumericalWindow::Reset(Byte* string) {
   }
 }
 
+inline bool NumericalWindow::CheckCollision(const Byte *a, const Byte *b) {
+  return memcmp(a, b, width_ * sizeof(Byte)) != 0;
+}
+
 // Fast implementation of window semantics by integer module
 class SimpleWindow : public RabinWindowInterface {
   public:
@@ -152,7 +159,8 @@ class SimpleWindow : public RabinWindowInterface {
     Int Slide(Byte *string);
     Int GetFingerprint();
     Int Reset(Byte* string = 0);
-
+    bool CheckCollision(const Byte *a, const Byte *b);
+  
   private:
     uint64_t fingerprint_;
   
@@ -192,6 +200,10 @@ inline Int SimpleWindow::Reset(Byte *string) {
   } else {
     return kPrime; // dnotes success
   }
+}
+
+inline bool SimpleWindow::CheckCollision(const Byte *a, const Byte *b) {
+  return *((uint64_t *)a) != *((uint64_t *)b);
 }
 
 #endif /* CINQUAIN_RABIN_FINGERPRINT_H_ */
